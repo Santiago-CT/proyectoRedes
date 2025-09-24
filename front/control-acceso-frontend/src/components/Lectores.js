@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, X, MapPin, Wifi, Activity } from 'lucide-react';
+import { Plus, Edit, Trash2, X, MapPin, Wifi, Activity, Loader2 } from 'lucide-react';
 import { obtenerLectores, crearLector, actualizarLector, eliminarLector } from '../api';
 
 const Lectores = ({ darkMode }) => {
   const [lectores, setLectores] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingLector, setEditingLector] = useState(null);
   const [formData, setFormData] = useState({ ubicacion: '', estado: 'Activo' });
@@ -12,17 +13,15 @@ const Lectores = ({ darkMode }) => {
 
   useEffect(() => {
     const fetchLectores = async () => {
+      setIsLoading(true);
       try {
-        const lectoresData = await obtenerLectores();
-        // Agregamos estado y ultimaActividad porque el backend no los devuelve
-        const formattedLectores = lectoresData.map(l => ({
-          ...l,
-          estado: 'Activo', // Asumimos que si se obtienen, están activos
-          ultimaActividad: new Date().toISOString().slice(0, 19).replace('T', ' ')
-        }));
-        setLectores(formattedLectores);
+        const data = await obtenerLectores();
+        setLectores(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Error al obtener lectores:', error);
+        console.error("Error al obtener lectores:", error);
+        setLectores([]);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchLectores();
@@ -42,22 +41,17 @@ const Lectores = ({ darkMode }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
       if (editingLector) {
-        await actualizarLector(editingLector.id, formData);
-        setLectores(lectores.map(l => 
-          l.id === editingLector.id 
-            ? { ...l, ...formData } 
-            : l
-        ));
+        const updatedLector = await actualizarLector(editingLector.id, formData);
+        setLectores(lectores.map(l => (l.id === editingLector.id ? updatedLector : l)));
       } else {
         const newLector = await crearLector(formData);
         setLectores([...lectores, newLector]);
       }
       closeModal();
     } catch (error) {
-      console.error('Error al guardar el lector:', error);
+      console.error("Error al guardar el lector:", error);
     }
   };
 
@@ -67,7 +61,7 @@ const Lectores = ({ darkMode }) => {
         await eliminarLector(id);
         setLectores(lectores.filter(l => l.id !== id));
       } catch (error) {
-        console.error('Error al eliminar el lector:', error);
+        console.error("Error al eliminar el lector:", error);
       }
     }
   };
@@ -75,31 +69,25 @@ const Lectores = ({ darkMode }) => {
   const toggleEstado = async (id) => {
     const lector = lectores.find(l => l.id === id);
     const nuevoEstado = lector.estado === 'Activo' ? 'Inactivo' : 'Activo';
-    
+
     try {
-      await actualizarLector(id, { ...lector, estado: nuevoEstado });
-      setLectores(lectores.map(l => 
-        l.id === id 
-          ? { ...l, estado: nuevoEstado, ultimaActividad: new Date().toISOString().slice(0, 19).replace('T', ' ') }
-          : l
-      ));
+        const updatedLector = await actualizarLector(id, { ...lector, estado: nuevoEstado });
+        setLectores(lectores.map(l => (l.id === id ? updatedLector : l)));
     } catch (error) {
-      console.error('Error al actualizar el estado:', error);
+        console.error("Error al cambiar el estado del lector:", error);
     }
   };
-
-  // Filtrar lectores
+  
   const filteredLectores = lectores.filter(lector => {
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       lector.ubicacion.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'todos' || 
-      lector.estado.toLowerCase() === statusFilter.toLowerCase();
-    
+
+    const matchesStatus = statusFilter === 'todos' ||
+      (lector.estado && lector.estado.toLowerCase() === statusFilter.toLowerCase());
+
     return matchesSearch && matchesStatus;
   });
 
-  // Estadísticas
   const lectoresActivos = lectores.filter(l => l.estado === 'Activo').length;
   const lectoresInactivos = lectores.filter(l => l.estado === 'Inactivo').length;
 
@@ -111,8 +99,6 @@ const Lectores = ({ darkMode }) => {
           Configura y gestiona los lectores RFID
         </p>
       </div>
-
-      {/* Estadísticas rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg p-6 border-l-4 border-green-500`}>
           <div className="flex items-center justify-between">
@@ -123,7 +109,7 @@ const Lectores = ({ darkMode }) => {
             <Wifi className="w-8 h-8 text-green-500" />
           </div>
         </div>
-        
+
         <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg p-6 border-l-4 border-red-500`}>
           <div className="flex items-center justify-between">
             <div>
@@ -133,7 +119,7 @@ const Lectores = ({ darkMode }) => {
             <Wifi className="w-8 h-8 text-red-500" />
           </div>
         </div>
-        
+
         <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg p-6 border-l-4 border-blue-500`}>
           <div className="flex items-center justify-between">
             <div>
@@ -144,11 +130,9 @@ const Lectores = ({ darkMode }) => {
           </div>
         </div>
       </div>
-      
-      {/* Controles superiores */}
+
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <div className="flex flex-col md:flex-row gap-4 flex-1">
-          {/* Búsqueda */}
           <div className="flex-1">
             <input
               type="text"
@@ -160,8 +144,7 @@ const Lectores = ({ darkMode }) => {
               }`}
             />
           </div>
-          
-          {/* Filtro por estado */}
+
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -174,8 +157,8 @@ const Lectores = ({ darkMode }) => {
             <option value="inactivo">Solo inactivos</option>
           </select>
         </div>
-        
-        <button 
+
+        <button
           onClick={() => openModal()}
           className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
         >
@@ -183,89 +166,87 @@ const Lectores = ({ darkMode }) => {
           <span>Agregar Lector</span>
         </button>
       </div>
-      
-      {/* Tabla de lectores */}
+
       <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg overflow-hidden`}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ubicación</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estado</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Última Actividad</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-              {filteredLectores.map((lector) => (
-                <tr key={lector.id} className={`hover:${darkMode ? 'bg-gray-700' : 'bg-gray-50'} transition-colors`}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{lector.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-gray-500" />
-                      <span>{lector.ubicacion}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => toggleEstado(lector.id)}
-                        className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors cursor-pointer ${
-                          lector.estado === 'Activo'
-                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                            : 'bg-red-100 text-red-800 hover:bg-red-200'
-                        }`}
-                      >
-                        {lector.estado}
-                      </button>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex items-center space-x-2">
-                      <Activity className="w-4 h-4 text-gray-500" />
-                      <span>{new Date(lector.ultimaActividad).toLocaleString()}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                    <button 
-                      onClick={() => openModal(lector)}
-                      className="text-blue-500 hover:text-blue-700 transition-colors p-1"
-                      title="Editar lector"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => deleteLector(lector.id)}
-                      className="text-red-500 hover:text-red-700 transition-colors p-1"
-                      title="Eliminar lector"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            <span className="ml-2 text-lg">Cargando lectores...</span>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ubicación</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estado</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        
-        {filteredLectores.length === 0 && (
-          <div className="text-center py-8">
-            <Wifi className={`w-12 h-12 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
-            <p className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              No se encontraron lectores
-            </p>
-            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              {searchTerm || statusFilter !== 'todos' 
-                ? 'Intenta ajustar los filtros de búsqueda' 
-                : 'Comienza agregando tu primer lector RFID'
-              }
-            </p>
+              </thead>
+              <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                {Array.isArray(filteredLectores) && filteredLectores.map((lector) => (
+                  <tr key={lector.id} className={`hover:${darkMode ? 'bg-gray-700' : 'bg-gray-50'} transition-colors`}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{lector.id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-gray-500" />
+                        <span>{lector.ubicacion}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => toggleEstado(lector.id)}
+                          className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors cursor-pointer ${
+                            lector.estado === 'Activo'
+                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                              : 'bg-red-100 text-red-800 hover:bg-red-200'
+                          }`}
+                        >
+                          {lector.estado || 'Indefinido'}
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                      <button
+                        onClick={() => openModal(lector)}
+                        className="text-blue-500 hover:text-blue-700 transition-colors p-1"
+                        title="Editar lector"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteLector(lector.id)}
+                        className="text-red-500 hover:text-red-700 transition-colors p-1"
+                        title="Eliminar lector"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {filteredLectores.length === 0 && (
+              <div className="text-center py-8">
+                <Wifi className={`w-12 h-12 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
+                <p className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  No se encontraron lectores
+                </p>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {searchTerm || statusFilter !== 'todos'
+                    ? 'Intenta ajustar los filtros de búsqueda'
+                    : 'Comienza agregando tu primer lector RFID'
+                  }
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-xl p-6 w-full max-w-md mx-4`}>
@@ -278,7 +259,7 @@ const Lectores = ({ darkMode }) => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
@@ -288,7 +269,7 @@ const Lectores = ({ darkMode }) => {
                 <input
                   type="text"
                   value={formData.ubicacion}
-                  onChange={(e) => setFormData({...formData, ubicacion: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
                   placeholder="Ej: Entrada Principal, Sala de Servidores..."
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
@@ -296,7 +277,7 @@ const Lectores = ({ darkMode }) => {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1">
                   <Activity className="w-4 h-4 inline mr-1" />
@@ -304,7 +285,7 @@ const Lectores = ({ darkMode }) => {
                 </label>
                 <select
                   value={formData.estado}
-                  onChange={(e) => setFormData({...formData, estado: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                   }`}
@@ -313,7 +294,7 @@ const Lectores = ({ darkMode }) => {
                   <option value="Inactivo">Inactivo</option>
                 </select>
               </div>
-              
+
               <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
                 <div className="flex items-start space-x-2">
                   <Wifi className="w-4 h-4 text-blue-500 mt-0.5" />
@@ -327,7 +308,7 @@ const Lectores = ({ darkMode }) => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"

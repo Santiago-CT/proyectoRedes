@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Wifi, Activity, Clock, User } from 'lucide-react';
+import { Users, Wifi, Activity, Clock, Loader2 } from 'lucide-react';
 import { obtenerUsuarios, obtenerLectores, obtenerRegistros } from '../api';
 
 const MetricCard = ({ title, value, icon: Icon, color, subtitle, darkMode }) => (
@@ -30,19 +30,23 @@ const Dashboard = ({ darkMode }) => {
           obtenerLectores(),
           obtenerRegistros(),
         ]);
-        setUsuarios(usuariosData);
-        setLectores(lectoresData);
+        
+        setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
+        setLectores(Array.isArray(lectoresData) ? lectoresData : []);
 
-        // Formatear los registros para que coincidan con la estructura del frontend
-        const formattedRegistros = registrosData.map(registro => ({
+        const formattedRegistros = (Array.isArray(registrosData) ? registrosData : []).map(registro => ({
           ...registro,
-          usuario: registro.usuario.nombre,
-          lector: registro.lector.ubicacion,
+          usuario: registro.usuario?.nombre || 'N/A',
+          lector: registro.lector?.ubicacion || 'N/A',
           tipoMovimiento: registro.tipoMovimiento === 'entrada' ? 'Entrada' : 'Salida',
         }));
         setRegistros(formattedRegistros);
+        
       } catch (error) {
         console.error('Error al obtener los datos:', error);
+        setUsuarios([]);
+        setLectores([]);
+        setRegistros([]);
       } finally {
         setIsLoading(false);
       }
@@ -50,14 +54,13 @@ const Dashboard = ({ darkMode }) => {
     fetchAllData();
   }, []);
 
-  const totalEntradas = registros.filter(r => r.tipoMovimiento === 'Entrada').length;
-  const totalSalidas = registros.filter(r => r.tipoMovimiento === 'Salida').length;
   const registrosHoy = registros.filter(r => {
     const today = new Date().toISOString().split('T')[0];
     return new Date(r.fechaHora).toISOString().split('T')[0] === today;
   }).length;
   
-  const lastEntry = registros.findLast(r => r.tipoMovimiento === 'Entrada');
+  const lastEntry = registros.slice().sort((a, b) => new Date(b.fechaHora) - new Date(a.fechaHora)).find(r => r.tipoMovimiento === 'Entrada');
+
 
   return (
     <div className="space-y-6">
@@ -69,8 +72,9 @@ const Dashboard = ({ darkMode }) => {
       </div>
       
       {isLoading ? (
-        <div className="text-center py-12">
-          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Cargando datos...</p>
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+          <span className="ml-4 text-xl">Cargando datos del dashboard...</span>
         </div>
       ) : (
         <>
@@ -104,7 +108,7 @@ const Dashboard = ({ darkMode }) => {
               value={lastEntry ? new Date(lastEntry.fechaHora).toLocaleTimeString() : 'N/A'} 
               icon={Clock} 
               color="border-purple-500"
-              subtitle={lastEntry ? lastEntry.usuario : 'N/A'}
+              subtitle={lastEntry ? lastEntry.usuario : 'Sin entradas recientes'}
               darkMode={darkMode}
             />
           </div>
@@ -131,6 +135,11 @@ const Dashboard = ({ darkMode }) => {
                   </div>
                 </div>
               ))}
+               {registros.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No hay movimientos registrados.
+                </div>
+              )}
             </div>
           </div>
         </>
