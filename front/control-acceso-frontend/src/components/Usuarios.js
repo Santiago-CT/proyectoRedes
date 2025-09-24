@@ -1,24 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, X } from 'lucide-react';
-// import { obtenerUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario } from '../api';
-
-const mockUsuarios = [
-  { id: 1, nombre: 'Juan Pérez', documento: '12345678' },
-  { id: 2, nombre: 'María García', documento: '87654321' },
-  { id: 3, nombre: 'Carlos López', documento: '11223344' },
-  { id: 4, nombre: 'Ana Martínez', documento: '44332211' }
-];
+import { obtenerUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario } from '../api';
 
 const Usuarios = ({ darkMode }) => {
-  const [usuarios, setUsuarios] = useState(mockUsuarios);
+  const [usuarios, setUsuarios] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({ nombre: '', documento: '' });
 
-  // Cuando integres tu API, descomenta y usa:
-  // useEffect(() => {
-  //   obtenerUsuarios().then(setUsuarios);
-  // }, []);
+  useEffect(() => {
+    obtenerUsuarios().then(setUsuarios);
+  }, []);
 
   const openModal = (user = null) => {
     setEditingUser(user);
@@ -34,22 +26,21 @@ const Usuarios = ({ darkMode }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (editingUser) {
-      // await actualizarUsuario(editingUser.id, formData);
+      await actualizarUsuario(editingUser.id, formData);
       setUsuarios(usuarios.map(u => u.id === editingUser.id ? { ...editingUser, ...formData } : u));
     } else {
-      // const newUser = await crearUsuario(formData);
-      const newUser = { id: usuarios.length + 1, ...formData };
+      const newUser = await crearUsuario(formData);
       setUsuarios([...usuarios, newUser]);
     }
-    
+
     closeModal();
   };
 
   const deleteUser = async (id) => {
     if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
-      // await eliminarUsuario(id);
+      await eliminarUsuario(id);
       setUsuarios(usuarios.filter(u => u.id !== id));
     }
   };
@@ -62,7 +53,7 @@ const Usuarios = ({ darkMode }) => {
           Administra los usuarios del sistema
         </p>
       </div>
-      
+
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-semibold">Lista de Usuarios</h3>
         <button 
@@ -73,7 +64,7 @@ const Usuarios = ({ darkMode }) => {
           <span>Agregar Usuario</span>
         </button>
       </div>
-      
+
       <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg overflow-hidden`}>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -112,7 +103,6 @@ const Usuarios = ({ darkMode }) => {
         </div>
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-xl p-6 w-full max-w-md mx-4`}>
@@ -124,7 +114,7 @@ const Usuarios = ({ darkMode }) => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Nombre</label>
@@ -150,7 +140,7 @@ const Usuarios = ({ darkMode }) => {
                   required
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"

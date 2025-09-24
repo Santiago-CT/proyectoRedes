@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  Calendar, 
-  Filter, 
-  Download, 
-  RefreshCw, 
-  User, 
-  MapPin, 
+import {
+  Search,
+  Calendar,
+  Filter,
+  Download,
+  RefreshCw,
+  User,
+  MapPin,
   Clock,
   TrendingUp,
   TrendingDown,
@@ -14,90 +14,79 @@ import {
   FileText,
   X
 } from 'lucide-react';
-// import { obtenerRegistros, obtenerUsuarios, obtenerLectores } from '../api';
-
-const mockRegistros = [
-  { id: 1, usuarioId: 1, usuario: 'Juan Pérez', lectorId: 1, lector: 'Entrada Principal', tipoMovimiento: 'Entrada', fechaHora: '2024-01-15 08:30:15' },
-  { id: 2, usuarioId: 2, usuario: 'María García', lectorId: 2, lector: 'Sala de Servidores', tipoMovimiento: 'Entrada', fechaHora: '2024-01-15 09:15:30' },
-  { id: 3, usuarioId: 3, usuario: 'Carlos López', lectorId: 3, lector: 'Oficina Administrativa', tipoMovimiento: 'Salida', fechaHora: '2024-01-15 12:30:45' },
-  { id: 4, usuarioId: 4, usuario: 'Ana Martínez', lectorId: 4, lector: 'Almacén', tipoMovimiento: 'Entrada', fechaHora: '2024-01-15 14:20:10' },
-  { id: 5, usuarioId: 1, usuario: 'Juan Pérez', lectorId: 1, lector: 'Entrada Principal', tipoMovimiento: 'Salida', fechaHora: '2024-01-15 18:00:25' },
-  { id: 6, usuarioId: 2, usuario: 'María García', lectorId: 2, lector: 'Sala de Servidores', tipoMovimiento: 'Salida', fechaHora: '2024-01-15 17:45:12' },
-  { id: 7, usuarioId: 5, usuario: 'Pedro Rodríguez', lectorId: 1, lector: 'Entrada Principal', tipoMovimiento: 'Entrada', fechaHora: '2024-01-15 07:15:30' },
-  { id: 8, usuarioId: 6, usuario: 'Laura Fernández', lectorId: 3, lector: 'Oficina Administrativa', tipoMovimiento: 'Entrada', fechaHora: '2024-01-15 08:45:20' },
-  { id: 9, usuarioId: 7, usuario: 'Diego Sánchez', lectorId: 4, lector: 'Almacén', tipoMovimiento: 'Salida', fechaHora: '2024-01-15 16:30:40' },
-  { id: 10, usuarioId: 3, usuario: 'Carlos López', lectorId: 2, lector: 'Sala de Servidores', tipoMovimiento: 'Entrada', fechaHora: '2024-01-15 13:20:55' }
-];
-
-const mockUsuarios = [
-  { id: 1, nombre: 'Juan Pérez' },
-  { id: 2, nombre: 'María García' },
-  { id: 3, nombre: 'Carlos López' },
-  { id: 4, nombre: 'Ana Martínez' },
-  { id: 5, nombre: 'Pedro Rodríguez' },
-  { id: 6, nombre: 'Laura Fernández' },
-  { id: 7, nombre: 'Diego Sánchez' }
-];
-
-const mockLectores = [
-  { id: 1, ubicacion: 'Entrada Principal' },
-  { id: 2, ubicacion: 'Sala de Servidores' },
-  { id: 3, ubicacion: 'Oficina Administrativa' },
-  { id: 4, ubicacion: 'Almacén' }
-];
+import { obtenerRegistros, obtenerUsuarios, obtenerLectores } from '../api';
 
 const Registros = ({ darkMode }) => {
-  const [registros, setRegistros] = useState(mockRegistros);
-  const [usuarios, setUsuarios] = useState(mockUsuarios);
-  const [lectores, setLectores] = useState(mockLectores);
-  
-  // Filtros
+  const [registros, setRegistros] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [lectores, setLectores] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [usuarioFilter, setUsuarioFilter] = useState('');
   const [lectorFilter, setLectorFilter] = useState('');
   const [tipoMovimientoFilter, setTipoMovimientoFilter] = useState('');
   const [fechaInicioFilter, setFechaInicioFilter] = useState('');
   const [fechaFinFilter, setFechaFinFilter] = useState('');
-  
-  // Paginación
+
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(10);
-  
-  // Estados de UI
+
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Cuando integres tu API, descomenta y usa:
-  // useEffect(() => {
-  //   const cargarDatos = async () => {
-  //     setIsLoading(true);
-  //     try {
-  //       const [registrosData, usuariosData, lectoresData] = await Promise.all([
-  //         obtenerRegistros(),
-  //         obtenerUsuarios(),
-  //         obtenerLectores()
-  //       ]);
-  //       setRegistros(registrosData);
-  //       setUsuarios(usuariosData);
-  //       setLectores(lectoresData);
-  //     } catch (error) {
-  //       console.error('Error al cargar datos:', error);
-  //     }
-  //     setIsLoading(false);
-  //   };
-  //   cargarDatos();
-  // }, []);
+  useEffect(() => {
+    const cargarDatos = async () => {
+      setIsLoading(true);
+      try {
+        const [registrosData, usuariosData, lectoresData] = await Promise.all([
+          obtenerRegistros(),
+          obtenerUsuarios(),
+          obtenerLectores()
+        ]);
 
-  // Función para recargar datos
+        const formattedRegistros = registrosData.map(registro => ({
+          ...registro,
+          usuario: registro.usuario.nombre,
+          lector: registro.lector.ubicacion
+        }));
+
+        setRegistros(formattedRegistros);
+        setUsuarios(usuariosData);
+        setLectores(lectoresData);
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    cargarDatos();
+  }, []);
+
   const recargarDatos = async () => {
     setIsLoading(true);
-    // Simular recarga
-    setTimeout(() => {
+    try {
+      const [registrosData, usuariosData, lectoresData] = await Promise.all([
+        obtenerRegistros(),
+        obtenerUsuarios(),
+        obtenerLectores()
+      ]);
+
+      const formattedRegistros = registrosData.map(registro => ({
+        ...registro,
+        usuario: registro.usuario.nombre,
+        lector: registro.lector.ubicacion
+      }));
+
+      setRegistros(formattedRegistros);
+      setUsuarios(usuariosData);
+      setLectores(lectoresData);
+    } catch (error) {
+      console.error('Error al recargar datos:', error);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  // Limpiar filtros
   const limpiarFiltros = () => {
     setSearchTerm('');
     setUsuarioFilter('');
@@ -108,38 +97,35 @@ const Registros = ({ darkMode }) => {
     setCurrentPage(1);
   };
 
-  // Filtrar registros
   const filteredRegistros = registros.filter(registro => {
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       registro.usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
       registro.lector.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesUsuario = usuarioFilter === '' || 
+
+    const matchesUsuario = usuarioFilter === '' ||
       registro.usuarioId.toString() === usuarioFilter;
-    
-    const matchesLector = lectorFilter === '' || 
+
+    const matchesLector = lectorFilter === '' ||
       registro.lectorId.toString() === lectorFilter;
-    
-    const matchesTipoMovimiento = tipoMovimientoFilter === '' || 
+
+    const matchesTipoMovimiento = tipoMovimientoFilter === '' ||
       registro.tipoMovimiento === tipoMovimientoFilter;
-    
+
     const registroFecha = new Date(registro.fechaHora).toISOString().split('T')[0];
-    const matchesFechaInicio = fechaInicioFilter === '' || 
+    const matchesFechaInicio = fechaInicioFilter === '' ||
       registroFecha >= fechaInicioFilter;
-    const matchesFechaFin = fechaFinFilter === '' || 
+    const matchesFechaFin = fechaFinFilter === '' ||
       registroFecha <= fechaFinFilter;
-    
-    return matchesSearch && matchesUsuario && matchesLector && 
+
+    return matchesSearch && matchesUsuario && matchesLector &&
            matchesTipoMovimiento && matchesFechaInicio && matchesFechaFin;
   });
 
-  // Paginación
   const totalPages = Math.ceil(filteredRegistros.length / recordsPerPage);
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
   const currentRecords = filteredRegistros.slice(startIndex, endIndex);
 
-  // Estadísticas
   const totalEntradas = registros.filter(r => r.tipoMovimiento === 'Entrada').length;
   const totalSalidas = registros.filter(r => r.tipoMovimiento === 'Salida').length;
   const registrosHoy = registros.filter(r => {
@@ -147,7 +133,6 @@ const Registros = ({ darkMode }) => {
     return r.fechaHora.split(' ')[0] === hoy;
   }).length;
 
-  // Exportar datos
   const exportarCSV = () => {
     const csvContent = [
       ['ID', 'Usuario', 'Lector', 'Tipo Movimiento', 'Fecha y Hora'],
@@ -204,7 +189,6 @@ const Registros = ({ darkMode }) => {
         </p>
       </div>
 
-      {/* Estadísticas rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <MetricCard 
           title="Total Registros" 
@@ -235,11 +219,9 @@ const Registros = ({ darkMode }) => {
           trend={15}
         />
       </div>
-      
-      {/* Controles superiores */}
+
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div className="flex flex-col sm:flex-row gap-4 flex-1">
-          {/* Búsqueda */}
           <div className="relative flex-1">
             <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -252,8 +234,7 @@ const Registros = ({ darkMode }) => {
               }`}
             />
           </div>
-          
-          {/* Registros por página */}
+
           <select
             value={recordsPerPage}
             onChange={(e) => {
@@ -270,7 +251,7 @@ const Registros = ({ darkMode }) => {
             <option value={50}>50 por página</option>
           </select>
         </div>
-        
+
         <div className="flex gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -285,7 +266,7 @@ const Registros = ({ darkMode }) => {
             <Filter className="w-4 h-4" />
             <span>Filtros</span>
           </button>
-          
+
           <button
             onClick={recargarDatos}
             disabled={isLoading}
@@ -298,7 +279,7 @@ const Registros = ({ darkMode }) => {
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Recargar</span>
           </button>
-          
+
           <button
             onClick={exportarCSV}
             className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
@@ -309,7 +290,6 @@ const Registros = ({ darkMode }) => {
         </div>
       </div>
 
-      {/* Panel de filtros */}
       {showFilters && (
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6 border-l-4 border-blue-500`}>
           <div className="flex justify-between items-center mb-4">
@@ -324,7 +304,7 @@ const Registros = ({ darkMode }) => {
               Limpiar filtros
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Usuario</label>
@@ -341,7 +321,7 @@ const Registros = ({ darkMode }) => {
                 ))}
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1">Lector</label>
               <select
@@ -357,7 +337,7 @@ const Registros = ({ darkMode }) => {
                 ))}
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1">Tipo Movimiento</label>
               <select
@@ -372,7 +352,7 @@ const Registros = ({ darkMode }) => {
                 <option value="Salida">Solo salidas</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1">Fecha Inicio</label>
               <input
@@ -384,7 +364,7 @@ const Registros = ({ darkMode }) => {
                 }`}
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1">Fecha Fin</label>
               <input
@@ -400,15 +380,13 @@ const Registros = ({ darkMode }) => {
         </div>
       )}
 
-      {/* Información de resultados */}
       <div className="flex justify-between items-center">
         <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
           Mostrando {startIndex + 1} a {Math.min(endIndex, filteredRegistros.length)} de {filteredRegistros.length} registros
           {filteredRegistros.length !== registros.length && ` (filtrados de ${registros.length} total)`}
         </p>
       </div>
-      
-      {/* Tabla de registros */}
+
       <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg overflow-hidden`}>
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -479,7 +457,7 @@ const Registros = ({ darkMode }) => {
             </table>
           </div>
         )}
-        
+
         {currentRecords.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <FileText className={`w-16 h-16 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
@@ -504,7 +482,6 @@ const Registros = ({ darkMode }) => {
         )}
       </div>
 
-      {/* Paginación */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -531,12 +508,12 @@ const Registros = ({ darkMode }) => {
               Anterior
             </button>
           </div>
-          
+
           <div className="flex items-center space-x-1">
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const page = i + Math.max(1, currentPage - 2);
               if (page > totalPages) return null;
-              
+
               return (
                 <button
                   key={page}
@@ -554,7 +531,7 @@ const Registros = ({ darkMode }) => {
               );
             })}
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
