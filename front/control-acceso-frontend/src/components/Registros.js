@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Search,
-  Calendar,
-  Filter,
-  Download,
-  RefreshCw,
-  User,
-  MapPin,
+import { 
+  Search, 
+  Calendar, 
+  Filter, 
+  Download, 
+  RefreshCw, 
+  User, 
+  MapPin, 
   Clock,
   TrendingUp,
   TrendingDown,
@@ -20,17 +20,20 @@ const Registros = ({ darkMode }) => {
   const [registros, setRegistros] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [lectores, setLectores] = useState([]);
-
+  
+  // Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [usuarioFilter, setUsuarioFilter] = useState('');
   const [lectorFilter, setLectorFilter] = useState('');
   const [tipoMovimientoFilter, setTipoMovimientoFilter] = useState('');
   const [fechaInicioFilter, setFechaInicioFilter] = useState('');
   const [fechaFinFilter, setFechaFinFilter] = useState('');
-
+  
+  // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(10);
-
+  
+  // Estados de UI
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -43,10 +46,12 @@ const Registros = ({ darkMode }) => {
           obtenerUsuarios(),
           obtenerLectores()
         ]);
-
+        
         const formattedRegistros = registrosData.map(registro => ({
           ...registro,
+          usuarioId: registro.usuario.id,
           usuario: registro.usuario.nombre,
+          lectorId: registro.lector.id,
           lector: registro.lector.ubicacion
         }));
 
@@ -73,7 +78,9 @@ const Registros = ({ darkMode }) => {
 
       const formattedRegistros = registrosData.map(registro => ({
         ...registro,
+        usuarioId: registro.usuario.id,
         usuario: registro.usuario.nombre,
+        lectorId: registro.lector.id,
         lector: registro.lector.ubicacion
       }));
 
@@ -101,22 +108,22 @@ const Registros = ({ darkMode }) => {
     const matchesSearch = searchTerm === '' ||
       registro.usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
       registro.lector.toLowerCase().includes(searchTerm.toLowerCase());
-
+    
     const matchesUsuario = usuarioFilter === '' ||
       registro.usuarioId.toString() === usuarioFilter;
-
+    
     const matchesLector = lectorFilter === '' ||
       registro.lectorId.toString() === lectorFilter;
-
+    
     const matchesTipoMovimiento = tipoMovimientoFilter === '' ||
-      registro.tipoMovimiento === tipoMovimientoFilter;
-
+      registro.tipoMovimiento.toLowerCase() === tipoMovimientoFilter.toLowerCase();
+    
     const registroFecha = new Date(registro.fechaHora).toISOString().split('T')[0];
     const matchesFechaInicio = fechaInicioFilter === '' ||
       registroFecha >= fechaInicioFilter;
     const matchesFechaFin = fechaFinFilter === '' ||
       registroFecha <= fechaFinFilter;
-
+    
     return matchesSearch && matchesUsuario && matchesLector &&
            matchesTipoMovimiento && matchesFechaInicio && matchesFechaFin;
   });
@@ -126,11 +133,12 @@ const Registros = ({ darkMode }) => {
   const endIndex = startIndex + recordsPerPage;
   const currentRecords = filteredRegistros.slice(startIndex, endIndex);
 
-  const totalEntradas = registros.filter(r => r.tipoMovimiento === 'Entrada').length;
-  const totalSalidas = registros.filter(r => r.tipoMovimiento === 'Salida').length;
+  const totalEntradas = registros.filter(r => r.tipoMovimiento.toLowerCase() === 'entrada').length;
+  const totalSalidas = registros.filter(r => r.tipoMovimiento.toLowerCase() === 'salida').length;
   const registrosHoy = registros.filter(r => {
     const hoy = new Date().toISOString().split('T')[0];
-    return r.fechaHora.split(' ')[0] === hoy;
+    const fechaRegistro = new Date(r.fechaHora).toISOString().split('T')[0];
+    return fechaRegistro === hoy;
   }).length;
 
   const exportarCSV = () => {
@@ -219,7 +227,7 @@ const Registros = ({ darkMode }) => {
           trend={15}
         />
       </div>
-
+      
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div className="flex flex-col sm:flex-row gap-4 flex-1">
           <div className="relative flex-1">
@@ -234,7 +242,7 @@ const Registros = ({ darkMode }) => {
               }`}
             />
           </div>
-
+          
           <select
             value={recordsPerPage}
             onChange={(e) => {
@@ -251,7 +259,7 @@ const Registros = ({ darkMode }) => {
             <option value={50}>50 por página</option>
           </select>
         </div>
-
+        
         <div className="flex gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -266,7 +274,7 @@ const Registros = ({ darkMode }) => {
             <Filter className="w-4 h-4" />
             <span>Filtros</span>
           </button>
-
+          
           <button
             onClick={recargarDatos}
             disabled={isLoading}
@@ -279,7 +287,7 @@ const Registros = ({ darkMode }) => {
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Recargar</span>
           </button>
-
+          
           <button
             onClick={exportarCSV}
             className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
@@ -304,7 +312,7 @@ const Registros = ({ darkMode }) => {
               Limpiar filtros
             </button>
           </div>
-
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Usuario</label>
@@ -321,7 +329,7 @@ const Registros = ({ darkMode }) => {
                 ))}
               </select>
             </div>
-
+            
             <div>
               <label className="block text-sm font-medium mb-1">Lector</label>
               <select
@@ -337,7 +345,7 @@ const Registros = ({ darkMode }) => {
                 ))}
               </select>
             </div>
-
+            
             <div>
               <label className="block text-sm font-medium mb-1">Tipo Movimiento</label>
               <select
@@ -352,7 +360,7 @@ const Registros = ({ darkMode }) => {
                 <option value="Salida">Solo salidas</option>
               </select>
             </div>
-
+            
             <div>
               <label className="block text-sm font-medium mb-1">Fecha Inicio</label>
               <input
@@ -364,7 +372,7 @@ const Registros = ({ darkMode }) => {
                 }`}
               />
             </div>
-
+            
             <div>
               <label className="block text-sm font-medium mb-1">Fecha Fin</label>
               <input
@@ -386,7 +394,7 @@ const Registros = ({ darkMode }) => {
           {filteredRegistros.length !== registros.length && ` (filtrados de ${registros.length} total)`}
         </p>
       </div>
-
+      
       <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg overflow-hidden`}>
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -457,7 +465,7 @@ const Registros = ({ darkMode }) => {
             </table>
           </div>
         )}
-
+        
         {currentRecords.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <FileText className={`w-16 h-16 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
@@ -508,12 +516,12 @@ const Registros = ({ darkMode }) => {
               Anterior
             </button>
           </div>
-
+          
           <div className="flex items-center space-x-1">
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const page = i + Math.max(1, currentPage - 2);
               if (page > totalPages) return null;
-
+              
               return (
                 <button
                   key={page}
@@ -531,7 +539,7 @@ const Registros = ({ darkMode }) => {
               );
             })}
           </div>
-
+          
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}

@@ -9,7 +9,15 @@ const Usuarios = ({ darkMode }) => {
   const [formData, setFormData] = useState({ nombre: '', documento: '' });
 
   useEffect(() => {
-    obtenerUsuarios().then(setUsuarios);
+    const fetchUsers = async () => {
+      try {
+        const users = await obtenerUsuarios();
+        setUsuarios(users);
+      } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+      }
+    };
+    fetchUsers();
   }, []);
 
   const openModal = (user = null) => {
@@ -26,22 +34,28 @@ const Usuarios = ({ darkMode }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (editingUser) {
-      await actualizarUsuario(editingUser.id, formData);
-      setUsuarios(usuarios.map(u => u.id === editingUser.id ? { ...editingUser, ...formData } : u));
-    } else {
-      const newUser = await crearUsuario(formData);
-      setUsuarios([...usuarios, newUser]);
+    try {
+      if (editingUser) {
+        await actualizarUsuario(editingUser.id, formData);
+        setUsuarios(usuarios.map(u => (u.id === editingUser.id ? { ...u, ...formData } : u)));
+      } else {
+        const newUser = await crearUsuario(formData);
+        setUsuarios([...usuarios, newUser]);
+      }
+      closeModal();
+    } catch (error) {
+      console.error('Error al guardar el usuario:', error);
     }
-
-    closeModal();
   };
 
   const deleteUser = async (id) => {
     if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
-      await eliminarUsuario(id);
-      setUsuarios(usuarios.filter(u => u.id !== id));
+      try {
+        await eliminarUsuario(id);
+        setUsuarios(usuarios.filter(u => u.id !== id));
+      } catch (error) {
+        console.error('Error al eliminar el usuario:', error);
+      }
     }
   };
 
@@ -53,7 +67,7 @@ const Usuarios = ({ darkMode }) => {
           Administra los usuarios del sistema
         </p>
       </div>
-
+      
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-semibold">Lista de Usuarios</h3>
         <button 
@@ -64,7 +78,7 @@ const Usuarios = ({ darkMode }) => {
           <span>Agregar Usuario</span>
         </button>
       </div>
-
+      
       <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg overflow-hidden`}>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -114,7 +128,7 @@ const Usuarios = ({ darkMode }) => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
+            
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Nombre</label>
@@ -140,7 +154,7 @@ const Usuarios = ({ darkMode }) => {
                   required
                 />
               </div>
-
+              
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"

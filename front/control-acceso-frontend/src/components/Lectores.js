@@ -11,7 +11,21 @@ const Lectores = ({ darkMode }) => {
   const [statusFilter, setStatusFilter] = useState('todos');
 
   useEffect(() => {
-    obtenerLectores().then(setLectores);
+    const fetchLectores = async () => {
+      try {
+        const lectoresData = await obtenerLectores();
+        // Agregamos estado y ultimaActividad porque el backend no los devuelve
+        const formattedLectores = lectoresData.map(l => ({
+          ...l,
+          estado: 'Activo', // Asumimos que si se obtienen, están activos
+          ultimaActividad: new Date().toISOString().slice(0, 19).replace('T', ' ')
+        }));
+        setLectores(formattedLectores);
+      } catch (error) {
+        console.error('Error al obtener lectores:', error);
+      }
+    };
+    fetchLectores();
   }, []);
 
   const openModal = (lector = null) => {
@@ -28,56 +42,64 @@ const Lectores = ({ darkMode }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const newLectorData = {
-      ...formData,
-      ultimaActividad: new Date().toISOString().slice(0, 19).replace('T', ' ')
-    };
-
-    if (editingLector) {
-      await actualizarLector(editingLector.id, formData);
-      setLectores(lectores.map(l => 
-        l.id === editingLector.id 
-          ? { ...editingLector, ...newLectorData } 
-          : l
-      ));
-    } else {
-      const newLector = await crearLector(formData);
-      setLectores([...lectores, newLector]);
+    
+    try {
+      if (editingLector) {
+        await actualizarLector(editingLector.id, formData);
+        setLectores(lectores.map(l => 
+          l.id === editingLector.id 
+            ? { ...l, ...formData } 
+            : l
+        ));
+      } else {
+        const newLector = await crearLector(formData);
+        setLectores([...lectores, newLector]);
+      }
+      closeModal();
+    } catch (error) {
+      console.error('Error al guardar el lector:', error);
     }
-
-    closeModal();
   };
 
   const deleteLector = async (id) => {
     if (window.confirm('¿Estás seguro de eliminar este lector?')) {
-      await eliminarLector(id);
-      setLectores(lectores.filter(l => l.id !== id));
+      try {
+        await eliminarLector(id);
+        setLectores(lectores.filter(l => l.id !== id));
+      } catch (error) {
+        console.error('Error al eliminar el lector:', error);
+      }
     }
   };
 
   const toggleEstado = async (id) => {
     const lector = lectores.find(l => l.id === id);
     const nuevoEstado = lector.estado === 'Activo' ? 'Inactivo' : 'Activo';
-
-    await actualizarLector(id, { ...lector, estado: nuevoEstado });
-    setLectores(lectores.map(l => 
-      l.id === id 
-        ? { ...l, estado: nuevoEstado, ultimaActividad: new Date().toISOString().slice(0, 19).replace('T', ' ') }
-        : l
-    ));
+    
+    try {
+      await actualizarLector(id, { ...lector, estado: nuevoEstado });
+      setLectores(lectores.map(l => 
+        l.id === id 
+          ? { ...l, estado: nuevoEstado, ultimaActividad: new Date().toISOString().slice(0, 19).replace('T', ' ') }
+          : l
+      ));
+    } catch (error) {
+      console.error('Error al actualizar el estado:', error);
+    }
   };
 
+  // Filtrar lectores
   const filteredLectores = lectores.filter(lector => {
     const matchesSearch = searchTerm === '' || 
       lector.ubicacion.toLowerCase().includes(searchTerm.toLowerCase());
-
+    
     const matchesStatus = statusFilter === 'todos' || 
       lector.estado.toLowerCase() === statusFilter.toLowerCase();
-
+    
     return matchesSearch && matchesStatus;
   });
 
+  // Estadísticas
   const lectoresActivos = lectores.filter(l => l.estado === 'Activo').length;
   const lectoresInactivos = lectores.filter(l => l.estado === 'Inactivo').length;
 
@@ -89,6 +111,8 @@ const Lectores = ({ darkMode }) => {
           Configura y gestiona los lectores RFID
         </p>
       </div>
+
+      {/* Estadísticas rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg p-6 border-l-4 border-green-500`}>
           <div className="flex items-center justify-between">
@@ -99,7 +123,7 @@ const Lectores = ({ darkMode }) => {
             <Wifi className="w-8 h-8 text-green-500" />
           </div>
         </div>
-
+        
         <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg p-6 border-l-4 border-red-500`}>
           <div className="flex items-center justify-between">
             <div>
@@ -109,7 +133,7 @@ const Lectores = ({ darkMode }) => {
             <Wifi className="w-8 h-8 text-red-500" />
           </div>
         </div>
-
+        
         <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg p-6 border-l-4 border-blue-500`}>
           <div className="flex items-center justify-between">
             <div>
@@ -120,9 +144,11 @@ const Lectores = ({ darkMode }) => {
           </div>
         </div>
       </div>
-
+      
+      {/* Controles superiores */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <div className="flex flex-col md:flex-row gap-4 flex-1">
+          {/* Búsqueda */}
           <div className="flex-1">
             <input
               type="text"
@@ -134,7 +160,8 @@ const Lectores = ({ darkMode }) => {
               }`}
             />
           </div>
-
+          
+          {/* Filtro por estado */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -147,7 +174,7 @@ const Lectores = ({ darkMode }) => {
             <option value="inactivo">Solo inactivos</option>
           </select>
         </div>
-
+        
         <button 
           onClick={() => openModal()}
           className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
@@ -156,7 +183,8 @@ const Lectores = ({ darkMode }) => {
           <span>Agregar Lector</span>
         </button>
       </div>
-
+      
+      {/* Tabla de lectores */}
       <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg overflow-hidden`}>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -220,7 +248,7 @@ const Lectores = ({ darkMode }) => {
             </tbody>
           </table>
         </div>
-
+        
         {filteredLectores.length === 0 && (
           <div className="text-center py-8">
             <Wifi className={`w-12 h-12 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
@@ -237,6 +265,7 @@ const Lectores = ({ darkMode }) => {
         )}
       </div>
 
+      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-xl p-6 w-full max-w-md mx-4`}>
@@ -249,7 +278,7 @@ const Lectores = ({ darkMode }) => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
+            
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
@@ -267,7 +296,7 @@ const Lectores = ({ darkMode }) => {
                   required
                 />
               </div>
-
+              
               <div>
                 <label className="block text-sm font-medium mb-1">
                   <Activity className="w-4 h-4 inline mr-1" />
@@ -284,7 +313,7 @@ const Lectores = ({ darkMode }) => {
                   <option value="Inactivo">Inactivo</option>
                 </select>
               </div>
-
+              
               <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
                 <div className="flex items-start space-x-2">
                   <Wifi className="w-4 h-4 text-blue-500 mt-0.5" />
@@ -298,7 +327,7 @@ const Lectores = ({ darkMode }) => {
                   </div>
                 </div>
               </div>
-
+              
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
