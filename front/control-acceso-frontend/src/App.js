@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './App.css';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Usuarios from './components/Usuarios';
@@ -26,17 +27,28 @@ function App() {
   };
 
   return (
-    <div className={`${darkMode ? 'dark' : ''} bg-gray-100 dark:bg-gray-900 min-h-screen`}>
+    <div className={darkMode ? 'dark app-container' : 'app-container'}>
       <Sidebar
         activeSection={activeSection}
         setActiveSection={setActiveSection}
         darkMode={darkMode}
       />
-      <main className="ml-64 p-8">
-        <div className="flex justify-end mb-4">
+      <main className="main-content">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
           <button
             onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+            style={{
+              background: darkMode ? '#374151' : '#f3f4f6',
+              border: 'none',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: darkMode ? '#f9fafb' : '#1f2937'
+            }}
           >
             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>

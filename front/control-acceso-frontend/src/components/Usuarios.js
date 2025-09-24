@@ -17,7 +17,6 @@ const Usuarios = ({ darkMode }) => {
         setUsuarios(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error al obtener usuarios:", error);
-        setUsuarios([]);
       } finally {
         setIsLoading(false);
       }
@@ -39,7 +38,6 @@ const Usuarios = ({ darkMode }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       if (editingUser) {
         const updatedUser = await actualizarUsuario(editingUser.id, formData);
@@ -67,139 +65,83 @@ const Usuarios = ({ darkMode }) => {
 
   return (
     <div className="space-y-6">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold">Gestión de Usuarios</h2>
-        <p className={`mt-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-          Administra los usuarios del sistema
-        </p>
+      <div className="page-header">
+        <h2>Gestión de Usuarios</h2>
+        <p>Administra los usuarios del sistema</p>
       </div>
 
-      <div className="flex justify-between items-center">
-        <h3 className="text-xl font-semibold flex items-center">
-          <Users className="w-6 h-6 mr-2" />
-          Lista de Usuarios ({usuarios.length})
-        </h3>
-        <button
-          onClick={() => openModal()}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
+      <div className="toolbar">
+        <h3 className="font-semibold" style={{fontSize: '1.25rem'}}>Lista de Usuarios ({usuarios.length})</h3>
+        <button onClick={() => openModal()} className="btn btn-primary">
+          <Plus size={16} />
           <span>Agregar Usuario</span>
         </button>
       </div>
 
-      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg overflow-hidden`}>
+      <div className="table-container">
         {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-            <span className="ml-2 text-lg">Cargando usuarios...</span>
+          <div className="loading-indicator">
+            <Loader2 className="spinner" />
+            <span>Cargando usuarios...</span>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Nombre</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Documento</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Documento</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usuarios.map((usuario) => (
+                <tr key={usuario.id}>
+                  <td>{usuario.id}</td>
+                  <td>{usuario.nombre}</td>
+                  <td>{usuario.documento}</td>
+                  <td style={{display: 'flex', gap: '0.5rem'}}>
+                    <button onClick={() => openModal(usuario)} className="btn-icon" title="Editar">
+                      <Edit size={16} color="#3b82f6" />
+                    </button>
+                    <button onClick={() => deleteUser(usuario.id)} className="btn-icon" title="Eliminar">
+                      <Trash2 size={16} color="#ef4444" />
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                {Array.isArray(usuarios) && usuarios.map((usuario) => (
-                  <tr key={usuario.id} className={`hover:${darkMode ? 'bg-gray-700' : 'bg-gray-50'} transition-colors`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{usuario.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">{usuario.nombre}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">{usuario.documento}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                      <button
-                        onClick={() => openModal(usuario)}
-                        className="text-blue-500 hover:text-blue-700 transition-colors p-1"
-                        title="Editar usuario"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteUser(usuario.id)}
-                        className="text-red-500 hover:text-red-700 transition-colors p-1"
-                        title="Eliminar usuario"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {usuarios.length === 0 && (
-              <div className="text-center py-8">
-                <Users className={`w-12 h-12 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
-                <p className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  No se encontraron usuarios
-                </p>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Comienza agregando tu primer usuario.
-                </p>
-              </div>
-            )}
-          </div>
+              ))}
+            </tbody>
+          </table>
         )}
+         { !isLoading && usuarios.length === 0 && (
+            <div className="empty-state">
+              <Users size={48} />
+              <p>No se encontraron usuarios</p>
+            </div>
+          )}
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-xl p-6 w-full max-w-md mx-4`}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">
-                {editingUser ? 'Editar Usuario' : 'Agregar Usuario'}
-              </h3>
-              <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
-                <X className="w-5 h-5" />
-              </button>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>{editingUser ? 'Editar Usuario' : 'Agregar Usuario'}</h3>
+              <button onClick={closeModal} className="btn-icon"><X size={24} /></button>
             </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Nombre</label>
-                <input
-                  type="text"
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                  }`}
-                  required
-                />
+            <form onSubmit={handleSubmit}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label htmlFor="nombre">Nombre</label>
+                  <input id="nombre" type="text" value={formData.nombre} onChange={(e) => setFormData({...formData, nombre: e.target.value})} className="form-input" required/>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="documento">Documento</label>
+                  <input id="documento" type="text" value={formData.documento} onChange={(e) => setFormData({...formData, documento: e.target.value})} className="form-input" required/>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Documento</label>
-                <input
-                  type="text"
-                  value={formData.documento}
-                  onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                  }`}
-                  required
-                />
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    darkMode ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                  }`}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                  {editingUser ? 'Actualizar' : 'Crear'}
-                </button>
+              <div className="modal-footer">
+                <button type="button" onClick={closeModal} className="btn">Cancelar</button>
+                <button type="submit" className="btn btn-primary">{editingUser ? 'Actualizar' : 'Crear'}</button>
               </div>
             </form>
           </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, X, MapPin, Wifi, Activity, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, X, MapPin, Wifi, Activity, Loader2, Users } from 'lucide-react';
 import { obtenerLectores, crearLector, actualizarLector, eliminarLector } from '../api';
 
 const Lectores = ({ darkMode }) => {
@@ -8,22 +8,21 @@ const Lectores = ({ darkMode }) => {
   const [showModal, setShowModal] = useState(false);
   const [editingLector, setEditingLector] = useState(null);
   const [formData, setFormData] = useState({ ubicacion: '', estado: 'Activo' });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('todos');
+
+  const fetchLectores = async () => {
+    setIsLoading(true);
+    try {
+      const data = await obtenerLectores();
+      setLectores(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error al obtener lectores:", error);
+      setLectores([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchLectores = async () => {
-      setIsLoading(true);
-      try {
-        const data = await obtenerLectores();
-        setLectores(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Error al obtener lectores:", error);
-        setLectores([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchLectores();
   }, []);
 
@@ -66,264 +65,139 @@ const Lectores = ({ darkMode }) => {
     }
   };
 
-  const toggleEstado = async (id) => {
-    const lector = lectores.find(l => l.id === id);
-    const nuevoEstado = lector.estado === 'Activo' ? 'Inactivo' : 'Activo';
-
-    try {
-        const updatedLector = await actualizarLector(id, { ...lector, estado: nuevoEstado });
-        setLectores(lectores.map(l => (l.id === id ? updatedLector : l)));
-    } catch (error) {
-        console.error("Error al cambiar el estado del lector:", error);
-    }
-  };
-  
-  const filteredLectores = lectores.filter(lector => {
-    const matchesSearch = searchTerm === '' ||
-      lector.ubicacion.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = statusFilter === 'todos' ||
-      (lector.estado && lector.estado.toLowerCase() === statusFilter.toLowerCase());
-
-    return matchesSearch && matchesStatus;
-  });
-
   const lectoresActivos = lectores.filter(l => l.estado === 'Activo').length;
-  const lectoresInactivos = lectores.filter(l => l.estado === 'Inactivo').length;
 
   return (
     <div className="space-y-6">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold">Gestión de Lectores</h2>
-        <p className={`mt-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-          Configura y gestiona los lectores RFID
-        </p>
+      <div className="page-header">
+        <h2>Gestión de Lectores</h2>
+        <p>Configura y gestiona los lectores RFID del sistema</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg p-6 border-l-4 border-green-500`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Lectores Activos</p>
-              <p className="text-2xl font-bold mt-1 text-green-600">{lectoresActivos}</p>
-            </div>
-            <Wifi className="w-8 h-8 text-green-500" />
+      
+      <div className="metric-grid">
+        <div className="metric-card border-green">
+          <div>
+            <p className="title">Lectores Activos</p>
+            <p className="value">{lectoresActivos}</p>
           </div>
+          <Wifi size={32} className="icon" />
         </div>
-
-        <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg p-6 border-l-4 border-red-500`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Lectores Inactivos</p>
-              <p className="text-2xl font-bold mt-1 text-red-600">{lectoresInactivos}</p>
-            </div>
-            <Wifi className="w-8 h-8 text-red-500" />
+        <div className="metric-card border-red">
+          <div>
+            <p className="title">Lectores Inactivos</p>
+            <p className="value">{lectores.length - lectoresActivos}</p>
           </div>
+          <Wifi size={32} className="icon" />
         </div>
-
-        <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg p-6 border-l-4 border-blue-500`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Total Lectores</p>
-              <p className="text-2xl font-bold mt-1 text-blue-600">{lectores.length}</p>
-            </div>
-            <MapPin className="w-8 h-8 text-blue-500" />
+        <div className="metric-card border-blue">
+          <div>
+            <p className="title">Total Lectores</p>
+            <p className="value">{lectores.length}</p>
           </div>
+          <Users size={32} className="icon" />
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <div className="flex flex-col md:flex-row gap-4 flex-1">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Buscar por ubicación..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-              }`}
-            />
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-            }`}
-          >
-            <option value="todos">Todos los estados</option>
-            <option value="activo">Solo activos</option>
-            <option value="inactivo">Solo inactivos</option>
-          </select>
+      <div className="toolbar">
+        <div className="toolbar-left">
+          {/* Aquí puedes agregar filtros en el futuro si lo necesitas */}
         </div>
-
-        <button
-          onClick={() => openModal()}
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Agregar Lector</span>
-        </button>
+        <div className="toolbar-right">
+          <button onClick={() => openModal()} className="btn btn-success">
+            <Plus size={16} />
+            <span>Agregar Lector</span>
+          </button>
+        </div>
       </div>
 
-      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg overflow-hidden`}>
+      <div className="table-container">
         {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-            <span className="ml-2 text-lg">Cargando lectores...</span>
+          <div className="loading-indicator">
+            <Loader2 className="spinner" />
+            <span>Cargando lectores...</span>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ubicación</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Estado</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Ubicación</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lectores.map((lector) => (
+                <tr key={lector.id}>
+                  <td>#{lector.id}</td>
+                  <td>{lector.ubicacion}</td>
+                  <td>
+                    <span className={`status-pill ${lector.estado === 'Activo' ? 'active' : 'inactive'}`}>
+                      {lector.estado || 'Indefinido'}
+                    </span>
+                  </td>
+                  <td style={{display: 'flex', gap: '0.5rem'}}>
+                    <button onClick={() => openModal(lector)} className="btn-icon" title="Editar">
+                      <Edit size={16} color="#3b82f6" />
+                    </button>
+                    <button onClick={() => deleteLector(lector.id)} className="btn-icon" title="Eliminar">
+                      <Trash2 size={16} color="#ef4444" />
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                {Array.isArray(filteredLectores) && filteredLectores.map((lector) => (
-                  <tr key={lector.id} className={`hover:${darkMode ? 'bg-gray-700' : 'bg-gray-50'} transition-colors`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{lector.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-gray-500" />
-                        <span>{lector.ubicacion}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => toggleEstado(lector.id)}
-                          className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors cursor-pointer ${
-                            lector.estado === 'Activo'
-                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                              : 'bg-red-100 text-red-800 hover:bg-red-200'
-                          }`}
-                        >
-                          {lector.estado || 'Indefinido'}
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                      <button
-                        onClick={() => openModal(lector)}
-                        className="text-blue-500 hover:text-blue-700 transition-colors p-1"
-                        title="Editar lector"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteLector(lector.id)}
-                        className="text-red-500 hover:text-red-700 transition-colors p-1"
-                        title="Eliminar lector"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {filteredLectores.length === 0 && (
-              <div className="text-center py-8">
-                <Wifi className={`w-12 h-12 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
-                <p className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  No se encontraron lectores
-                </p>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {searchTerm || statusFilter !== 'todos'
-                    ? 'Intenta ajustar los filtros de búsqueda'
-                    : 'Comienza agregando tu primer lector RFID'
-                  }
-                </p>
-              </div>
-            )}
-          </div>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {!isLoading && lectores.length === 0 && (
+            <div className="empty-state">
+              <Wifi size={48} />
+              <p>No se encontraron lectores</p>
+            </div>
         )}
       </div>
 
+      {/* --- Ventana Emergente (Modal) --- */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-xl p-6 w-full max-w-md mx-4`}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold flex items-center space-x-2">
-                <Wifi className="w-5 h-5" />
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3 style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                <Wifi size={20} />
                 <span>{editingLector ? 'Editar Lector' : 'Agregar Lector'}</span>
               </h3>
-              <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
-                <X className="w-5 h-5" />
-              </button>
+              <button onClick={closeModal} className="btn-icon"><X size={24} /></button>
             </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  <MapPin className="w-4 h-4 inline mr-1" />
-                  Ubicación
-                </label>
-                <input
-                  type="text"
-                  value={formData.ubicacion}
-                  onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
-                  placeholder="Ej: Entrada Principal, Sala de Servidores..."
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                  }`}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  <Activity className="w-4 h-4 inline mr-1" />
-                  Estado
-                </label>
-                <select
-                  value={formData.estado}
-                  onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                  }`}
-                >
-                  <option value="Activo">Activo</option>
-                  <option value="Inactivo">Inactivo</option>
-                </select>
-              </div>
-
-              <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
-                <div className="flex items-start space-x-2">
-                  <Wifi className="w-4 h-4 text-blue-500 mt-0.5" />
-                  <div className="text-sm">
-                    <p className={`font-medium ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
-                      Información importante:
+            <form onSubmit={handleSubmit}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label htmlFor="ubicacion">
+                    <MapPin size={14} style={{display: 'inline-block', marginRight: '0.25rem'}} />
+                    Ubicación
+                  </label>
+                  <input id="ubicacion" type="text" value={formData.ubicacion} onChange={(e) => setFormData({...formData, ubicacion: e.target.value})} className="form-input" required placeholder="Ej: Entrada Principal"/>
+                </div>
+                 <div className="form-group">
+                  <label htmlFor="estado">
+                    <Activity size={14} style={{display: 'inline-block', marginRight: '0.25rem'}} />
+                    Estado
+                  </label>
+                  <select id="estado" value={formData.estado} onChange={(e) => setFormData({...formData, estado: e.target.value})} className="form-select">
+                    <option value="Activo">Activo</option>
+                    <option value="Inactivo">Inactivo</option>
+                  </select>
+                </div>
+                <div className="info-box">
+                    <Wifi size={20} />
+                    <p style={{margin: 0}}>
+                        Cada lector debe tener una ubicación única para identificarlo correctamente.
                     </p>
-                    <p className={`${darkMode ? 'text-blue-200' : 'text-blue-700'} mt-1`}>
-                      Cada lector debe tener una ubicación única para identificarlo correctamente en el sistema.
-                    </p>
-                  </div>
                 </div>
               </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    darkMode ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                  }`}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-                >
-                  <Wifi className="w-4 h-4" />
+              <div className="modal-footer">
+                <button type="button" onClick={closeModal} className="btn" style={{backgroundColor: darkMode ? '#4b5563' : '#e5e7eb', color: darkMode ? 'white' : 'black'}}>Cancelar</button>
+                <button type="submit" className="btn btn-success">
+                  <Wifi size={16} />
                   <span>{editingLector ? 'Actualizar' : 'Crear'}</span>
                 </button>
               </div>

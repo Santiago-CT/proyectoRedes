@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8080",
+  //baseURL: "http://localhost:8080",
+  baseURL: "http://192.168.128.10:8080",
 });
 
 export const obtenerUsuarios = async () => {
@@ -44,5 +45,9 @@ export const eliminarLector = async (id) => {
 
 export const obtenerRegistros = async () => {
   const response = await api.get("/registros");
+  return response.data;
+};
+export const crearRegistro = async (registro) => {
+  const response = await api.post("/registros", registro);
   return response.data;
 };

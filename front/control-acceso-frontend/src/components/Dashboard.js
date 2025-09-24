@@ -2,16 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Users, Wifi, Activity, Clock, Loader2 } from 'lucide-react';
 import { obtenerUsuarios, obtenerLectores, obtenerRegistros } from '../api';
 
-const MetricCard = ({ title, value, icon: Icon, color, subtitle, darkMode }) => (
-  <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg p-6 border-l-4 ${color}`}>
-    <div className="flex items-center justify-between">
+const MetricCard = ({ title, value, icon: Icon, colorClass, subtitle, darkMode }) => (
+  <div className={`metric-card ${colorClass}`}>
       <div>
-        <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{title}</p>
-        <p className="text-2xl font-bold mt-1">{value}</p>
-        {subtitle && <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{subtitle}</p>}
+          <p className="title">{title}</p>
+          <p className="value">{value}</p>
+          {subtitle && <p className="subtitle">{subtitle}</p>}
       </div>
-      <Icon className={`w-8 h-8 ${color.includes('blue') ? 'text-blue-500' : color.includes('green') ? 'text-green-500' : color.includes('yellow') ? 'text-yellow-500' : 'text-purple-500'}`} />
-    </div>
+      <Icon size={32} className="icon" />
   </div>
 );
 
@@ -34,19 +32,18 @@ const Dashboard = ({ darkMode }) => {
         setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
         setLectores(Array.isArray(lectoresData) ? lectoresData : []);
 
-        const formattedRegistros = (Array.isArray(registrosData) ? registrosData : []).map(registro => ({
-          ...registro,
-          usuario: registro.usuario?.nombre || 'N/A',
-          lector: registro.lector?.ubicacion || 'N/A',
-          tipoMovimiento: registro.tipoMovimiento === 'entrada' ? 'Entrada' : 'Salida',
-        }));
+        const formattedRegistros = (Array.isArray(registrosData) ? registrosData : [])
+            .map(registro => ({
+                ...registro,
+                usuario: registro.usuario?.nombre || 'N/A',
+                lector: registro.lector?.ubicacion || 'N/A',
+                tipoMovimiento: registro.tipoMovimiento === 'entrada' ? 'Entrada' : 'Salida',
+            }))
+            .sort((a, b) => new Date(b.fechaHora) - new Date(a.fechaHora));
         setRegistros(formattedRegistros);
         
       } catch (error) {
         console.error('Error al obtener los datos:', error);
-        setUsuarios([]);
-        setLectores([]);
-        setRegistros([]);
       } finally {
         setIsLoading(false);
       }
@@ -54,96 +51,60 @@ const Dashboard = ({ darkMode }) => {
     fetchAllData();
   }, []);
 
-  const registrosHoy = registros.filter(r => {
-    const today = new Date().toISOString().split('T')[0];
-    return new Date(r.fechaHora).toISOString().split('T')[0] === today;
-  }).length;
+  const registrosHoy = registros.filter(r => new Date(r.fechaHora).toDateString() === new Date().toDateString()).length;
   
-  const lastEntry = registros.slice().sort((a, b) => new Date(b.fechaHora) - new Date(a.fechaHora)).find(r => r.tipoMovimiento === 'Entrada');
+  const lastEntry = registros.find(r => r.tipoMovimiento === 'Entrada');
 
+  if (isLoading) {
+    return (
+      <div className="loading-indicator">
+        <Loader2 className="spinner" />
+        <span>Cargando dashboard...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold">Dashboard Principal</h2>
-        <p className={`mt-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-          Vista general del sistema de control de acceso
-        </p>
+      <div className="page-header">
+        <h2>Dashboard Principal</h2>
+        <p>Vista general del sistema de control de acceso</p>
       </div>
       
-      {isLoading ? (
-        <div className="flex justify-center items-center py-20">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
-          <span className="ml-4 text-xl">Cargando datos del dashboard...</span>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <MetricCard 
-              title="Total Usuarios" 
-              value={usuarios.length} 
-              icon={Users} 
-              color="border-blue-500"
-              subtitle="Usuarios registrados"
-              darkMode={darkMode}
-            />
-            <MetricCard 
-              title="Total Lectores" 
-              value={lectores.length} 
-              icon={Wifi} 
-              color="border-green-500"
-              subtitle="Lectores activos"
-              darkMode={darkMode}
-            />
-            <MetricCard 
-              title="Registros Hoy" 
-              value={registrosHoy} 
-              icon={Activity} 
-              color="border-yellow-500"
-              subtitle="Entradas y salidas"
-              darkMode={darkMode}
-            />
-            <MetricCard 
-              title="Última Entrada" 
-              value={lastEntry ? new Date(lastEntry.fechaHora).toLocaleTimeString() : 'N/A'} 
-              icon={Clock} 
-              color="border-purple-500"
-              subtitle={lastEntry ? lastEntry.usuario : 'Sin entradas recientes'}
-              darkMode={darkMode}
-            />
-          </div>
-          
-          <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-            <h3 className="text-lg font-semibold mb-4">Últimos Movimientos</h3>
-            <div className="space-y-3">
-              {registros.slice(0, 5).map((registro) => (
-                <div key={registro.id} className={`flex items-center justify-between p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${registro.tipoMovimiento === 'Entrada' ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                    <div>
-                      <p className="font-medium">{registro.usuario}</p>
-                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{registro.lector}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-sm font-medium ${registro.tipoMovimiento === 'Entrada' ? 'text-green-600' : 'text-red-600'}`}>
-                      {registro.tipoMovimiento}
-                    </p>
-                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {new Date(registro.fechaHora).toLocaleString()}
-                    </p>
-                  </div>
+      <div className="metric-grid">
+        <MetricCard title="Total Usuarios" value={usuarios.length} icon={Users} colorClass="border-blue" subtitle="Usuarios registrados" darkMode={darkMode}/>
+        <MetricCard title="Total Lectores" value={lectores.length} icon={Wifi} colorClass="border-green" subtitle="Lectores activos" darkMode={darkMode}/>
+        <MetricCard title="Registros Hoy" value={registrosHoy} icon={Activity} colorClass="border-yellow" subtitle="Entradas y salidas" darkMode={darkMode}/>
+        <MetricCard title="Última Entrada" value={lastEntry ? new Date(lastEntry.fechaHora).toLocaleTimeString() : 'N/A'} icon={Clock} colorClass="border-purple" subtitle={lastEntry ? lastEntry.usuario : 'Sin entradas recientes'} darkMode={darkMode}/>
+      </div>
+      
+      <div className="card">
+        <h3 style={{fontSize: '1.25rem', fontWeight: 600, margin: 0}}>Últimos Movimientos</h3>
+        <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem'}}>
+          {registros.slice(0, 5).map((registro) => (
+            <div key={registro.id} style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', borderRadius: '0.5rem', backgroundColor: darkMode ? '#374151' : '#f9fafb'}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                <div style={{width: '12px', height: '12px', borderRadius: '50%', backgroundColor: registro.tipoMovimiento === 'Entrada' ? '#10b981' : '#ef4444'}}></div>
+                <div>
+                  <p style={{fontWeight: 500, margin: 0}}>{registro.usuario}</p>
+                  <p className="text-sm" style={{color: darkMode ? '#9ca3af' : '#6b7280', margin: 0}}>{registro.lector}</p>
                 </div>
-              ))}
-               {registros.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No hay movimientos registrados.
-                </div>
-              )}
+              </div>
+              <div style={{textAlign: 'right'}}>
+                <p className="text-sm font-medium" style={{color: registro.tipoMovimiento === 'Entrada' ? '#10b981' : '#ef4444', margin: 0}}>
+                  {registro.tipoMovimiento}
+                </p>
+                <p className="text-xs" style={{color: darkMode ? '#9ca3af' : '#6b7280', margin: 0}}>
+                  {new Date(registro.fechaHora).toLocaleString()}
+                </p>
+              </div>
             </div>
-          </div>
-        </>
-      )}
+          ))}
+          {registros.length === 0 && (
+            <div className="empty-state">No hay movimientos registrados.</div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

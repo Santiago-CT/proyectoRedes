@@ -10,6 +10,13 @@ import com.example.demo.repositories.RegistroRepository;
 import com.example.demo.repositories.UsuarioRepository;
 import com.example.demo.repositories.LectorRepository;
 
+// DTO para recibir los datos del frontend
+class RegistroRequest {
+    public Long usuarioId;
+    public Long lectorId;
+    public String tipoMovimiento;
+}
+
 @RestController
 @RequestMapping("/registros")
 public class RegistroController {
@@ -30,18 +37,21 @@ public class RegistroController {
     }
 
     @PostMapping
-    public Registro createRegistro(@RequestParam Long usuarioId,
-                                   @RequestParam Long lectorId,
-                                   @RequestParam String tipoMovimiento) {
-        Usuario usuario = usuarioRepo.findById(usuarioId).orElseThrow();
-        Lector lector = lectorRepo.findById(lectorId).orElseThrow();
+    public Registro createRegistro(@RequestBody RegistroRequest registroRequest) {
+        // Busca el usuario y el lector en la base de datos
+        Usuario usuario = usuarioRepo.findById(registroRequest.usuarioId)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + registroRequest.usuarioId));
+        Lector lector = lectorRepo.findById(registroRequest.lectorId)
+            .orElseThrow(() -> new RuntimeException("Lector no encontrado con id: " + registroRequest.lectorId));
 
+        // Crea el nuevo registro
         Registro registro = new Registro();
         registro.setUsuario(usuario);
         registro.setLector(lector);
-        registro.setTipoMovimiento(tipoMovimiento);
+        registro.setTipoMovimiento(registroRequest.tipoMovimiento);
         registro.setFechaHora(LocalDateTime.now());
 
+        // Guarda y devuelve el nuevo registro
         return registroRepo.save(registro);
     }
 }
