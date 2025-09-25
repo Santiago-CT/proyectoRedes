@@ -66,7 +66,7 @@ public class RegistroController {
         return registroRepo.save(registro);
     }
 
-    // NUEVO ENDPOINT PARA EL LECTOR RFID (ESP32)
+    // Endpoint para el lector RFID (ESP32)
     @PostMapping("/rfid")
     public Registro createRegistroByRfid(@RequestBody RfidRequest rfidRequest) {
         Usuario usuario = usuarioRepo.findByRfidTag(rfidRequest.rfidTag)

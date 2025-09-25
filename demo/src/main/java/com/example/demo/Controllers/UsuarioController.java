@@ -44,6 +44,8 @@ public class UsuarioController {
         Usuario usuario = usuarioRepo.findById(id).orElseThrow();
         usuario.setNombre(usuarioDetails.getNombre());
         usuario.setDocumento(usuarioDetails.getDocumento());
+        // 👇 LÍNEA AGREGADA: Esta es la línea que faltaba
+        usuario.setRfidTag(usuarioDetails.getRfidTag());
         return usuarioRepo.save(usuario);
     }
 

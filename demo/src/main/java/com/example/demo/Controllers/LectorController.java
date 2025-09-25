@@ -43,7 +43,7 @@ public class LectorController {
     public Lector updateLector(@PathVariable Long id, @RequestBody Lector lectorDetails) {
         Lector lector = lectorRepo.findById(id).orElseThrow();
         lector.setUbicacion(lectorDetails.getUbicacion());
-        lector.setEstado(lectorDetails.getEstado()); // <-- AÑADE ESTA LÍNEA
+        lector.setEstado(lectorDetails.getEstado()); // <-- Esta línea ya estaba incluida correctamente.
         return lectorRepo.save(lector);
     }
 

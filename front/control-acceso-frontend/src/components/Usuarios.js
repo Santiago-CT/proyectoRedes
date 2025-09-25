@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, X, Users, Loader2, Tag } from 'lucide-react'; // 1. Importa el ícono de Tag
+import { Plus, Edit, Trash2, X, Users, Loader2, Tag } from 'lucide-react';
 import { obtenerUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario } from '../api';
 
 const Usuarios = ({ darkMode }) => {
@@ -7,7 +7,6 @@ const Usuarios = ({ darkMode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  // 2. Añade rfidTag al estado del formulario
   const [formData, setFormData] = useState({ nombre: '', documento: '', rfidTag: '' });
 
   useEffect(() => {
@@ -18,6 +17,7 @@ const Usuarios = ({ darkMode }) => {
         setUsuarios(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error al obtener usuarios:", error);
+        setUsuarios([]); // Asegurarse de que sea un array vacío en caso de error
       } finally {
         setIsLoading(false);
       }
@@ -27,7 +27,6 @@ const Usuarios = ({ darkMode }) => {
 
   const openModal = (user = null) => {
     setEditingUser(user);
-    // 3. Asegúrate de incluir rfidTag al abrir el modal
     setFormData(user || { nombre: '', documento: '', rfidTag: '' });
     setShowModal(true);
   };
@@ -65,6 +64,58 @@ const Usuarios = ({ darkMode }) => {
     }
   };
 
+  const renderTableContent = () => {
+    if (isLoading) {
+      return (
+        <div className="loading-indicator">
+          <Loader2 className="spinner" />
+          <span>Cargando usuarios...</span>
+        </div>
+      );
+    }
+
+    if (usuarios.length === 0) {
+      return (
+        <div className="empty-state">
+          <Users size={48} />
+          <p>No se encontraron usuarios</p>
+        </div>
+      );
+    }
+
+    return (
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Documento</th>
+            <th>RFID Tag</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {usuarios.map((usuario) => (
+            <tr key={usuario.id}>
+              <td>{usuario.id}</td>
+              <td>{usuario.nombre}</td>
+              <td>{usuario.documento}</td>
+              <td>{usuario.rfidTag || 'No asignado'}</td>
+              <td style={{display: 'flex', gap: '0.5rem'}}>
+                <button onClick={() => openModal(usuario)} className="btn-icon" title="Editar">
+                  <Edit size={16} color="#3b82f6" />
+                </button>
+                <button onClick={() => deleteUser(usuario.id)} className="btn-icon" title="Eliminar">
+                  <Trash2 size={16} color="#ef4444" />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="page-header">
@@ -81,48 +132,7 @@ const Usuarios = ({ darkMode }) => {
       </div>
 
       <div className="table-container">
-        {isLoading ? (
-          <div className="loading-indicator">
-            <Loader2 className="spinner" />
-            <span>Cargando usuarios...</span>
-          </div>
-        ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Documento</th>
-                <th>RFID Tag</th> {/* <-- 4. NUEVA COLUMNA EN LA TABLA */}
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usuarios.map((usuario) => (
-                <tr key={usuario.id}>
-                  <td>{usuario.id}</td>
-                  <td>{usuario.nombre}</td>
-                  <td>{usuario.documento}</td>
-                  <td>{usuario.rfidTag || 'No asignado'}</td> {/* <-- 5. MUESTRA EL VALOR DEL TAG */}
-                  <td style={{display: 'flex', gap: '0.5rem'}}>
-                    <button onClick={() => openModal(usuario)} className="btn-icon" title="Editar">
-                      <Edit size={16} color="#3b82f6" />
-                    </button>
-                    <button onClick={() => deleteUser(usuario.id)} className="btn-icon" title="Eliminar">
-                      <Trash2 size={16} color="#ef4444" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-         { !isLoading && usuarios.length === 0 && (
-            <div className="empty-state">
-              <Users size={48} />
-              <p>No se encontraron usuarios</p>
-            </div>
-          )}
+        {renderTableContent()}
       </div>
 
       {showModal && (
@@ -142,7 +152,6 @@ const Usuarios = ({ darkMode }) => {
                   <label htmlFor="documento">Documento</label>
                   <input id="documento" type="text" value={formData.documento} onChange={(e) => setFormData({...formData, documento: e.target.value})} className="form-input" required/>
                 </div>
-                {/* --- 6. NUEVO CAMPO EN EL FORMULARIO --- */}
                 <div className="form-group">
                   <label htmlFor="rfidTag">
                     <Tag size={14} style={{display: 'inline-block', marginRight: '0.25rem'}} />

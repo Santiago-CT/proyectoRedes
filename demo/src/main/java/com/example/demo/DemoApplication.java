@@ -10,5 +10,4 @@ public class DemoApplication {
         SpringApplication.run(DemoApplication.class, args);
     }
 
-    // El método @Bean que creaba los datos ha sido eliminado.
 }
