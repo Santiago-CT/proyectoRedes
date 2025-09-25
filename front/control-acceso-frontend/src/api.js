@@ -14,7 +14,6 @@ export const crearUsuario = async (usuario) => {
   const response = await api.post("/usuarios", usuario);
   return response.data;
 };
-
 export const actualizarUsuario = async (id, usuario) => {
   const response = await api.put(`/usuarios/${id}`, usuario);
   return response.data;

@@ -1,6 +1,16 @@
 package com.example.demo.entities;
-import jakarta.persistence.*;
+
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 
 @Entity
 public class Usuario {
@@ -13,8 +23,11 @@ public class Usuario {
 
     private String documento;
 
-    // Relación con registros
-    @OneToMany(mappedBy = "usuario")
+    @Column(unique = true)
+    private String rfidTag;
+
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Registro> registros;
 
     // Getters y setters
@@ -40,6 +53,14 @@ public class Usuario {
 
     public void setDocumento(String documento) {
         this.documento = documento;
+    }
+
+    public String getRfidTag() {
+        return rfidTag;
+    }
+
+    public void setRfidTag(String rfidTag) {
+        this.rfidTag = rfidTag;
     }
 
     public List<Registro> getRegistros() {

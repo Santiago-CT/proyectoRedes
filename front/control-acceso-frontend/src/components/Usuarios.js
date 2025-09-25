@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, X, Users, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Users, Loader2, Tag } from 'lucide-react'; // 1. Importa el ícono de Tag
 import { obtenerUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario } from '../api';
 
 const Usuarios = ({ darkMode }) => {
@@ -7,7 +7,8 @@ const Usuarios = ({ darkMode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [formData, setFormData] = useState({ nombre: '', documento: '' });
+  // 2. Añade rfidTag al estado del formulario
+  const [formData, setFormData] = useState({ nombre: '', documento: '', rfidTag: '' });
 
   useEffect(() => {
     const fetchUsuarios = async () => {
@@ -26,14 +27,15 @@ const Usuarios = ({ darkMode }) => {
 
   const openModal = (user = null) => {
     setEditingUser(user);
-    setFormData(user || { nombre: '', documento: '' });
+    // 3. Asegúrate de incluir rfidTag al abrir el modal
+    setFormData(user || { nombre: '', documento: '', rfidTag: '' });
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingUser(null);
-    setFormData({ nombre: '', documento: '' });
+    setFormData({ nombre: '', documento: '', rfidTag: '' });
   };
 
   const handleSubmit = async (e) => {
@@ -91,6 +93,7 @@ const Usuarios = ({ darkMode }) => {
                 <th>ID</th>
                 <th>Nombre</th>
                 <th>Documento</th>
+                <th>RFID Tag</th> {/* <-- 4. NUEVA COLUMNA EN LA TABLA */}
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -100,6 +103,7 @@ const Usuarios = ({ darkMode }) => {
                   <td>{usuario.id}</td>
                   <td>{usuario.nombre}</td>
                   <td>{usuario.documento}</td>
+                  <td>{usuario.rfidTag || 'No asignado'}</td> {/* <-- 5. MUESTRA EL VALOR DEL TAG */}
                   <td style={{display: 'flex', gap: '0.5rem'}}>
                     <button onClick={() => openModal(usuario)} className="btn-icon" title="Editar">
                       <Edit size={16} color="#3b82f6" />
@@ -137,6 +141,14 @@ const Usuarios = ({ darkMode }) => {
                 <div className="form-group">
                   <label htmlFor="documento">Documento</label>
                   <input id="documento" type="text" value={formData.documento} onChange={(e) => setFormData({...formData, documento: e.target.value})} className="form-input" required/>
+                </div>
+                {/* --- 6. NUEVO CAMPO EN EL FORMULARIO --- */}
+                <div className="form-group">
+                  <label htmlFor="rfidTag">
+                    <Tag size={14} style={{display: 'inline-block', marginRight: '0.25rem'}} />
+                    Tag RFID
+                  </label>
+                  <input id="rfidTag" type="text" value={formData.rfidTag} onChange={(e) => setFormData({...formData, rfidTag: e.target.value})} className="form-input" placeholder="Ej: A1B2C3D4"/>
                 </div>
               </div>
               <div className="modal-footer">

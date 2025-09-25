@@ -1,7 +1,15 @@
 package com.example.demo.entities;
 
-import jakarta.persistence.*;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 
 @Entity
 public class Lector {
@@ -12,8 +20,10 @@ public class Lector {
 
     private String ubicacion;
 
-    // Relación con registros
-    @OneToMany(mappedBy = "lector")
+    private String estado; // <-- 1. AÑADE ESTA LÍNEA
+
+    @OneToMany(mappedBy = "lector", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Registro> registros;
 
     // Getters y setters
@@ -31,6 +41,15 @@ public class Lector {
 
     public void setUbicacion(String ubicacion) {
         this.ubicacion = ubicacion;
+    }
+    
+    // 2. AÑADE ESTOS DOS MÉTODOS
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 
     public List<Registro> getRegistros() {
