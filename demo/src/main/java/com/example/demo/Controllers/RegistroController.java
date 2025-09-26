@@ -4,11 +4,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.entities.Lector;
 import com.example.demo.entities.Registro;
@@ -49,24 +51,42 @@ public class RegistroController {
         return registroRepo.findAll();
     }
 
-    // Endpoint para la simulación desde el frontend
+    // Endpoint para la simulación desde el frontend (CON LA NUEVA LÓGICA)
     @PostMapping
     public Registro createRegistro(@RequestBody RegistroRequest registroRequest) {
         Usuario usuario = usuarioRepo.findById(registroRequest.usuarioId)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + registroRequest.usuarioId));
+        
         Lector lector = lectorRepo.findById(registroRequest.lectorId)
             .orElseThrow(() -> new RuntimeException("Lector no encontrado con id: " + registroRequest.lectorId));
+
+        // --- INICIO DE LA NUEVA VALIDACIÓN ---
+        Optional<Registro> ultimoRegistro = registroRepo.findTopByUsuarioOrderByIdDesc(usuario);
+        String movimientoDeseado = registroRequest.tipoMovimiento;
+
+        if (movimientoDeseado.equalsIgnoreCase("salida")) {
+            // Regla: No se puede registrar una salida si no hay registro previo o si el último fue una salida.
+            if (!ultimoRegistro.isPresent() || ultimoRegistro.get().getTipoMovimiento().equalsIgnoreCase("salida")) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede registrar salida: el usuario no tiene una entrada registrada.");
+            }
+        } else if (movimientoDeseado.equalsIgnoreCase("entrada")) {
+            // Regla: No se puede registrar una entrada si el último registro fue una entrada.
+            if (ultimoRegistro.isPresent() && ultimoRegistro.get().getTipoMovimiento().equalsIgnoreCase("entrada")) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede registrar entrada: el usuario ya se encuentra adentro.");
+            }
+        }
+        // --- FIN DE LA NUEVA VALIDACIÓN ---
 
         Registro registro = new Registro();
         registro.setUsuario(usuario);
         registro.setLector(lector);
-        registro.setTipoMovimiento(registroRequest.tipoMovimiento);
+        registro.setTipoMovimiento(movimientoDeseado);
         registro.setFechaHora(LocalDateTime.now());
 
         return registroRepo.save(registro);
     }
 
-    // Endpoint para el lector RFID (ESP32)
+    // NUEVO ENDPOINT PARA EL LECTOR RFID (ESP32)
     @PostMapping("/rfid")
     public Registro createRegistroByRfid(@RequestBody RfidRequest rfidRequest) {
         Usuario usuario = usuarioRepo.findByRfidTag(rfidRequest.rfidTag)

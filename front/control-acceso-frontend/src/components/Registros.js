@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, User, MapPin, Clock, TrendingUp, TrendingDown, Loader2, FileText, Plus, X } from 'lucide-react'; // CORREGIDO: Se importa 'X' y se elimina 'Download'
+import { RefreshCw, User, MapPin, Clock, TrendingUp, TrendingDown, Loader2, FileText, Plus, X } from 'lucide-react';
 import { obtenerRegistros, obtenerUsuarios, obtenerLectores, crearRegistro } from '../api';
 
 const Registros = ({ darkMode }) => {
@@ -52,7 +52,14 @@ const Registros = ({ darkMode }) => {
       setShowModal(false);
       cargarDatos();
     } catch (error) {
-      console.error("Error al crear el registro:", error);
+      // --- CÓDIGO ACTUALIZADO PARA MOSTRAR ERRORES ---
+      if (error.response && error.response.data && error.response.data.message) {
+        alert("Error: " + error.response.data.message);
+      } else {
+        console.error("Error al crear el registro:", error);
+        alert("Ocurrió un error inesperado al crear el registro.");
+      }
+      // --- FIN DE LA ACTUALIZACIÓN ---
     }
   };
 
