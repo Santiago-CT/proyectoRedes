@@ -4,13 +4,13 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-
 @Entity
 public class Usuario {
 
@@ -21,13 +21,14 @@ public class Usuario {
     private String nombre;
 
     private String documento;
+    private String estado;
 
     @Column(unique = true)
     private String rfidTag;
 
-    @OneToMany(mappedBy = "usuario")
-@JsonIgnore
-private List<Registro> registros;
+     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Registro> registros;
 
     // Getters y setters
     public Long getId() {
@@ -68,5 +69,11 @@ private List<Registro> registros;
 
     public void setRegistros(List<Registro> registros) {
         this.registros = registros;
+    }
+    public String getEstado() {
+        return estado;
+    }
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 }

@@ -22,6 +22,7 @@ import com.example.demo.repositories.LectorRepository;
 import com.example.demo.repositories.RegistroRepository;
 import com.example.demo.repositories.UsuarioRepository;
 
+
 // DTO para la simulación manual desde el frontend
 class RegistroRequest {
     public Long usuarioId;
@@ -97,7 +98,9 @@ public class RegistroController {
         
         Lector lector = lectorRepo.findById(rfidRequest.lectorId)
             .orElseThrow(() -> new RuntimeException("Lector no encontrado con id: " + rfidRequest.lectorId));
-
+        if (!"Activo".equalsIgnoreCase(usuario.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El usuario está inactivo y no puede realizar registros.");
+        }
         Optional<Registro> ultimoRegistro = registroRepo.findTopByUsuarioOrderByIdDesc(usuario);
         String tipoMovimiento = "entrada";
         if (ultimoRegistro.isPresent() && "entrada".equalsIgnoreCase(ultimoRegistro.get().getTipoMovimiento())) {
