@@ -24,6 +24,12 @@ export const eliminarUsuario = async (id) => {
   await api.delete(`/usuarios/${id}`);
 };
 
+export const obtenerUsuariosActivos = async () => {
+  const response = await api.get("/usuarios/activos");
+  return response.data;
+};
+
+
 // --- LECTORES ---
 export const obtenerLectores = async () => {
   const response = await api.get("/lectores");
@@ -43,6 +49,18 @@ export const actualizarLector = async (id, lector) => {
 export const eliminarLector = async (id) => {
   await api.delete(`/lectores/${id}`);
 };
+
+export const obtenerLectoresActivos = async () => {
+  const response = await api.get("/lectores/activos");
+  return response.data;
+};
+
+// --- FUNCIÓN AÑADIDA QUE FALTABA ---
+export const obtenerLectoresConRegistros = async () => {
+  const response = await api.get("/lectores/con-registros");
+  return response.data;
+};
+
 
 // --- REGISTROS ---
 export const obtenerRegistros = async () => {
@@ -65,13 +83,7 @@ export const obtenerRegistrosPorFecha = async (fecha) => {
   return response.data;
 };
 
-// --- NUEVAS FUNCIONES PARA ACTIVOS ---
-export const obtenerUsuariosActivos = async () => {
-  const response = await api.get("/usuarios/activos");
-  return response.data;
-};
-
-export const obtenerLectoresActivos = async () => {
-  const response = await api.get("/lectores/activos");
+export const obtenerRegistrosPorLector = async (lectorId) => {
+  const response = await api.get(`/registros/lector/${lectorId}`);
   return response.data;
 };

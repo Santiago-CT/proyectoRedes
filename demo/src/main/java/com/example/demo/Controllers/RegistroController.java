@@ -125,4 +125,8 @@ public class RegistroController {
     public List<Registro> getRegistrosByUsuario(@PathVariable Long usuarioId) {
         return registroRepo.findByUsuarioIdOrderByFechaHoraDesc(usuarioId);
     }
+    @GetMapping("/lector/{lectorId}")
+    public List<Registro> getRegistrosByLector(@PathVariable Long lectorId) {
+        return registroRepo.findByLectorIdOrderByFechaHoraDesc(lectorId);
+    }
 }

@@ -18,4 +18,5 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
     
     @Query("SELECT r FROM Registro r WHERE CAST(r.fechaHora AS date) = :fecha")
     List<Registro> findByFecha(@Param("fecha") LocalDate fecha);
+    List<Registro> findByLectorIdOrderByFechaHoraDesc(Long lectorId);
 }

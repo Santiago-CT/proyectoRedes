@@ -68,4 +68,5 @@ public class Registro {
     public void setLector(Lector lector) {
         this.lector = lector;
     }
+    
 }

@@ -25,14 +25,16 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
     setEditingUser(null);
     setFormData({ nombre: '', documento: '', rfidTag: '', estado: 'Activo' });
   };
-
+  
+  // Función centralizada para manejar acciones y recargar datos
   const handleAction = async (action) => {
     setIsLoading(true);
     try {
       await action();
       await reloadData(); // Llama a la función de App.js para recargar todo
     } catch (error) {
-      console.error("Ocurrió un error:", error);
+      console.error("Ocurrió un error al procesar la acción:", error);
+      alert("No se pudo completar la acción. Revisa la consola para más detalles.");
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +60,7 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
       handleAction(action);
     }
   };
-
+  
   const deleteUser = async (id) => {
     if (window.confirm('¿Estás seguro de eliminar este usuario? ESTA ACCIÓN BORRARÁ TODOS SUS REGISTROS DE FORMA PERMANENTE.')) {
       const action = async () => await eliminarUsuario(id);

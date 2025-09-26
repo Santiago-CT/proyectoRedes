@@ -1,16 +1,7 @@
 package com.example.demo.Controllers;
 
 import java.util.List;
-
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 import com.example.demo.entities.Lector;
 import com.example.demo.repositories.LectorRepository;
 
@@ -31,6 +22,10 @@ public class LectorController {
 
     @PostMapping
     public Lector createLector(@RequestBody Lector lector) {
+        // Asigna "Activo" por defecto si el estado no se especifica
+        if (lector.getEstado() == null || lector.getEstado().isEmpty()) {
+            lector.setEstado("Activo");
+        }
         return lectorRepo.save(lector);
     }
 
@@ -40,10 +35,14 @@ public class LectorController {
             .orElseThrow(() -> new RuntimeException("Lector no encontrado con id: " + id));
     }
 
-    // Nuevo endpoint para obtener solo los lectores activos
     @GetMapping("/activos")
     public List<Lector> getActiveLectores() {
         return lectorRepo.findByEstado("Activo");
+    }
+
+    @GetMapping("/con-registros")
+    public List<Lector> getLectoresConRegistros() {
+        return lectorRepo.findLectoresWithRegistros();
     }
 
     @PutMapping("/{id}")
