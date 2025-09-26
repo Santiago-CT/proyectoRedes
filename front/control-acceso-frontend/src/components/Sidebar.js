@@ -1,31 +1,42 @@
-import React from 'react';
-import { LayoutDashboard, Users, Wifi, History } from 'lucide-react';
 
-const Sidebar = ({ activeSection, setActiveSection, darkMode }) => {
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'usuarios', label: 'Usuarios', icon: Users },
-    { id: 'lectores', label: 'Lectores', icon: Wifi },
-    { id: 'registros', label: 'Registros', icon: History },
+import { NavLink } from 'react-router-dom';
+import { LayoutDashboard, Users, Wifi, FileText, Moon, Sun } from 'lucide-react';
+
+const Sidebar = ({ darkMode, setDarkMode }) => {
+  const sections = [
+    { name: 'Dashboard', path: '/', icon: <LayoutDashboard /> },
+    { name: 'Usuarios', path: '/usuarios', icon: <Users /> },
+    { name: 'Lectores', path: '/lectores', icon: <Wifi /> },
+    { name: 'Registros', path: '/registros', icon: <FileText /> },
   ];
 
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <h1>Control de Acceso</h1>
+        <h1 className="sidebar-title">Control de Acceso</h1>
       </div>
-      <nav>
-        {menuItems.map(item => (
-          <button
-            key={item.id}
-            onClick={() => setActiveSection(item.id)}
-            className={`sidebar-button ${activeSection === item.id ? 'active' : ''}`}
+      <nav className="sidebar-nav">
+        {sections.map((section) => (
+          // CORREGIDO: Usamos NavLink en lugar de Link
+          // NavLink maneja la clase 'active' automáticamente
+          <NavLink
+            key={section.name}
+            to={section.path}
+            // La clase 'active' se añade sola cuando la ruta coincide
+            className="sidebar-link"
+            end // 'end' es importante para que la ruta "/" no esté siempre activa
           >
-            <item.icon size={20} />
-            <span>{item.label}</span>
-          </button>
+            {section.icon}
+            <span>{section.name}</span>
+          </NavLink>
         ))}
       </nav>
+      <div className="sidebar-footer">
+        <button onClick={() => setDarkMode(!darkMode)} className="theme-toggle">
+          {darkMode ? <Sun /> : <Moon />}
+          <span>{darkMode ? 'Modo Claro' : 'Modo Oscuro'}</span>
+        </button>
+      </div>
     </aside>
   );
 };

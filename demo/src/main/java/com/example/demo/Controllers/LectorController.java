@@ -36,14 +36,24 @@ public class LectorController {
 
     @GetMapping("/{id}")
     public Lector getLectorById(@PathVariable Long id) {
-        return lectorRepo.findById(id).orElseThrow();
+        return lectorRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Lector no encontrado con id: " + id));
+    }
+
+    // Nuevo endpoint para obtener solo los lectores activos
+    @GetMapping("/activos")
+    public List<Lector> getActiveLectores() {
+        return lectorRepo.findByEstado("Activo");
     }
 
     @PutMapping("/{id}")
     public Lector updateLector(@PathVariable Long id, @RequestBody Lector lectorDetails) {
-        Lector lector = lectorRepo.findById(id).orElseThrow();
+        Lector lector = lectorRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Lector no encontrado con id: " + id));
+
         lector.setUbicacion(lectorDetails.getUbicacion());
-        lector.setEstado(lectorDetails.getEstado()); // <-- Esta línea ya estaba incluida correctamente.
+        lector.setEstado(lectorDetails.getEstado());
+        
         return lectorRepo.save(lector);
     }
 

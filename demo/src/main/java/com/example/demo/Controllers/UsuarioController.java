@@ -31,7 +31,7 @@ public class UsuarioController {
 
     @PostMapping
     public Usuario createUsuario(@RequestBody Usuario usuario) {
-        // --- CAMBIO: Asignar "Activo" por defecto ---
+        // Asigna "Activo" por defecto si el estado no se especifica
         if (usuario.getEstado() == null || usuario.getEstado().isEmpty()) {
             usuario.setEstado("Activo");
         }
@@ -40,23 +40,32 @@ public class UsuarioController {
 
     @GetMapping("/{id}")
     public Usuario getUsuarioById(@PathVariable Long id) {
-        return usuarioRepo.findById(id).orElseThrow();
+        return usuarioRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+    }
+
+    // Nuevo endpoint para obtener solo los usuarios activos
+    @GetMapping("/activos")
+    public List<Usuario> getActiveUsuarios() {
+        return usuarioRepo.findByEstado("Activo");
     }
 
     @PutMapping("/{id}")
     public Usuario updateUsuario(@PathVariable Long id, @RequestBody Usuario usuarioDetails) {
-        Usuario usuario = usuarioRepo.findById(id).orElseThrow();
+        Usuario usuario = usuarioRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+        
         usuario.setNombre(usuarioDetails.getNombre());
         usuario.setDocumento(usuarioDetails.getDocumento());
         usuario.setRfidTag(usuarioDetails.getRfidTag());
-        // --- CAMBIO: Permitir actualizar el estado ---
         usuario.setEstado(usuarioDetails.getEstado());
+        
         return usuarioRepo.save(usuario);
     }
 
     @DeleteMapping("/{id}")
     public void deleteUsuario(@PathVariable Long id) {
-        // Ahora esto eliminará al usuario y todos sus registros gracias al cambio en la entidad
+        // Elimina el usuario y sus registros en cascada
         usuarioRepo.deleteById(id);
     }
 }
