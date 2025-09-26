@@ -1,5 +1,5 @@
-
-import { NavLink } from 'react-router-dom';
+import React from 'react';
+import { NavLink } from 'react-router-dom'; // Importa NavLink
 import { LayoutDashboard, Users, Wifi, FileText, Moon, Sun } from 'lucide-react';
 
 const Sidebar = ({ darkMode, setDarkMode }) => {
@@ -17,14 +17,12 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
       </div>
       <nav className="sidebar-nav">
         {sections.map((section) => (
-          // CORREGIDO: Usamos NavLink en lugar de Link
-          // NavLink maneja la clase 'active' automáticamente
+          // Usamos NavLink, que maneja la clase 'active' automáticamente
           <NavLink
             key={section.name}
             to={section.path}
-            // La clase 'active' se añade sola cuando la ruta coincide
             className="sidebar-link"
-            end // 'end' es importante para que la ruta "/" no esté siempre activa
+            end // 'end' es crucial para que la ruta "/" no esté siempre activa
           >
             {section.icon}
             <span>{section.name}</span>

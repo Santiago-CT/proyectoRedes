@@ -5,21 +5,18 @@ import Dashboard from './components/Dashboard';
 import Usuarios from './components/Usuarios';
 import Lectores from './components/Lectores';
 import Registros from './components/Registros';
-import './App.css';
+import './App.css'; // El CSS se importa aquí
 import { obtenerUsuarios, obtenerLectores, obtenerRegistros } from './api';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
-  
-  // --- NUEVO: ESTADOS CENTRALIZADOS ---
   const [usuarios, setUsuarios] = useState([]);
   const [lectores, setLectores] = useState([]);
   const [registros, setRegistros] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- NUEVO: FUNCIÓN PARA CARGAR TODOS LOS DATOS ---
   const fetchData = async () => {
-    setIsLoading(true);
+    // No reseteamos isLoading aquí para evitar parpadeos al recargar
     try {
       const [usuariosData, lectoresData, registrosData] = await Promise.all([
         obtenerUsuarios(),
@@ -36,7 +33,6 @@ function App() {
     }
   };
 
-  // Carga los datos cuando la aplicación inicia
   useEffect(() => {
     fetchData();
   }, []);
@@ -44,40 +40,14 @@ function App() {
   return (
     <Router>
       <div className={`app-container ${darkMode ? 'dark' : ''}`}>
+        {/* Ya no pasamos activeSection ni setActiveSection */}
         <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} />
         <main className="main-content">
           <Routes>
-            <Route path="/" element={
-              <Dashboard 
-                usuarios={usuarios}
-                lectores={lectores}
-                registros={registros}
-                isLoading={isLoading}
-              />
-            }/>
-            <Route path="/usuarios" element={
-              <Usuarios 
-                initialData={usuarios}
-                reloadData={fetchData} 
-                darkMode={darkMode} 
-              />
-            }/>
-            <Route path="/lectores" element={
-              <Lectores
-                initialData={lectores}
-                reloadData={fetchData}
-                darkMode={darkMode}
-              />
-            }/>
-            <Route path="/registros" element={
-              <Registros
-                initialUsuarios={usuarios}
-                initialLectores={lectores}
-                initialRegistros={registros}
-                reloadData={fetchData}
-                darkMode={darkMode}
-              />
-            }/>
+            <Route path="/" element={ <Dashboard usuarios={usuarios} lectores={lectores} registros={registros} isLoading={isLoading} /> }/>
+            <Route path="/usuarios" element={ <Usuarios initialData={usuarios} reloadData={fetchData} darkMode={darkMode} /> }/>
+            <Route path="/lectores" element={ <Lectores initialData={lectores} reloadData={fetchData} darkMode={darkMode} /> }/>
+            <Route path="/registros" element={ <Registros initialUsuarios={usuarios} initialLectores={lectores} initialRegistros={registros} reloadData={fetchData} darkMode={darkMode} /> }/>
           </Routes>
         </main>
       </div>
