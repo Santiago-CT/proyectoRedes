@@ -1,49 +1,72 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Usuarios from './components/Usuarios';
 import Lectores from './components/Lectores';
 import Registros from './components/Registros';
-import Login from './components/Login'; // Importa el nuevo componente
+import Login from './components/Login';
 import './App.css';
 import { obtenerUsuarios, obtenerLectores, obtenerRegistros } from './api';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('authToken'));
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Estados para los datos de la app
   const [usuarios, setUsuarios] = useState([]);
   const [lectores, setLectores] = useState([]);
   const [registros, setRegistros] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchData = async () => {
-    // ... (la función fetchData se mantiene igual)
+  // --- FUNCIÓN PARA CERRAR SESIÓN ---
+  const handleLogout = () => {
+    localStorage.removeItem('authToken'); // Borra el token
+    setIsAuthenticated(false); // Actualiza el estado a "no autenticado"
   };
 
+  // --- FUNCIÓN PARA CARGAR DATOS (IMPLEMENTACIÓN COMPLETA) ---
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Realiza todas las peticiones en paralelo para mayor eficiencia
+      const [usuariosData, lectoresData, registrosData] = await Promise.all([
+        obtenerUsuarios(),
+        obtenerLectores(),
+        obtenerRegistros()
+      ]);
+      setUsuarios(usuariosData);
+      setLectores(lectoresData);
+      setRegistros(registrosData);
+    } catch (error) {
+      console.error("Error al cargar los datos:", error);
+      // Si el token es inválido (error 401), cerramos la sesión.
+      if (error.response && error.response.status === 401) {
+        handleLogout();
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []); // El array vacío asegura que la función no se recree innecesariamente.
+
   useEffect(() => {
+    // Cuando el estado de autenticación cambia a `true`, se cargan los datos.
     if (isAuthenticated) {
       fetchData();
     } else {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchData]);
 
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    setIsAuthenticated(false);
-  };
-
   return (
     <Router>
       <div className={`app-container ${darkMode ? 'dark' : ''}`}>
+        {/* Pasamos la función onLogout al Sidebar */}
         {isAuthenticated && <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} onLogout={handleLogout} />}
+        
         <main className="main-content">
           <Routes>
             <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />

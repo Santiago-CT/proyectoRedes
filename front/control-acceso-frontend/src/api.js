@@ -1,8 +1,16 @@
 import axios from "axios";
 
+// --- CONFIGURACIÓN DINÁMICA DE LA URL BASE ---
+// Si la app está en producción, usa la URL de Render.
+// Si está en desarrollo, usa localhost.
+const baseURL = process.env.NODE_ENV === 'production'
+  ? "https://proyectoredes.onrender.com"
+  : "http://localhost:8080";
+
 const api = axios.create({
-  baseURL: "https://proyectoredes.onrender.com",
+  baseURL: baseURL,
 });
+
 
 // --- INTERCEPTOR DE AUTENTICACIÓN ---
 // Este código se ejecuta en cada petición que hace la aplicación.

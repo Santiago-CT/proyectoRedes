@@ -1,8 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Wifi, FileText, Moon, Sun } from 'lucide-react';
+// Se importa el ícono de LogOut
+import { LayoutDashboard, Users, Wifi, FileText, Moon, Sun, LogOut } from 'lucide-react';
 
-const Sidebar = ({ darkMode, setDarkMode }) => {
+// Se añade la propiedad "onLogout" para recibir la función desde App.js
+const Sidebar = ({ darkMode, setDarkMode, onLogout }) => {
   const sections = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard /> },
     { name: 'Usuarios', path: '/usuarios', icon: <Users /> },
@@ -17,23 +19,27 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
       </div>
       <nav>
         {sections.map((section) => (
-          // Usamos NavLink, que maneja la clase 'active' automáticamente
           <NavLink
             key={section.name}
             to={section.path}
-            // Aquí aplicamos la clase correcta y la lógica para el estado activo
             className={({ isActive }) => `sidebar-button ${isActive ? 'active' : ''}`}
-            end // 'end' es crucial para que la ruta "/" no esté siempre activa
+            end
           >
             {section.icon}
             <span>{section.name}</span>
           </NavLink>
         ))}
       </nav>
-      <div style={{ padding: '1rem' }}>
+      {/* SECCIÓN INFERIOR CON BOTONES DE MODO OSCURO Y CERRAR SESIÓN */}
+      <div style={{ padding: '1rem', marginTop: 'auto', borderTop: '1px solid var(--border-light)' }}>
         <button onClick={() => setDarkMode(!darkMode)} className="sidebar-button">
           {darkMode ? <Sun /> : <Moon />}
           <span>{darkMode ? 'Modo Claro' : 'Modo Oscuro'}</span>
+        </button>
+        {/* ---- BOTÓN AÑADIDO ---- */}
+        <button onClick={onLogout} className="sidebar-button">
+          <LogOut />
+          <span>Cerrar Sesión</span>
         </button>
       </div>
     </aside>

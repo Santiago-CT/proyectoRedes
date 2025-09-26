@@ -3,11 +3,14 @@ package com.example.demo.config;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +24,12 @@ public class JwtUtil implements Serializable {
 
     @Value("${jwt.secret}")
     private String secret;
+
+    // --- NUEVO: Método para obtener la clave de firma ---
+    private Key getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(this.secret);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
 
     // Obtener username del token
     public String getUsernameFromToken(String token) {
@@ -39,7 +48,8 @@ public class JwtUtil implements Serializable {
 
     // Para obtener cualquier información del token necesitaremos la clave secreta
     private Claims getAllClaimsFromToken(String token) {
-        return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
+        // --- MODIFICADO: Usa el nuevo método de clave ---
+        return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
     }
 
     // Comprobar si el token ha expirado
@@ -55,9 +65,10 @@ public class JwtUtil implements Serializable {
     }
 
     private String doGenerateToken(Map<String, Object> claims, String subject) {
+        // --- MODIFICADO: Usa el nuevo método de clave y el algoritmo correcto ---
         return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
-                .signWith(SignatureAlgorithm.HS512, secret).compact();
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256).compact();
     }
 
     // Validar token
