@@ -1,9 +1,11 @@
 package com.example.demo.Controllers;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -110,8 +112,14 @@ public class RegistroController {
 
         return registroRepo.save(nuevoRegistro);
     }
+    @GetMapping("/fecha/{fecha}")
+    public List<Registro> getRegistrosByFecha(@PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+        return registroRepo.findByFecha(fecha);
+    }
+
     @GetMapping("/usuario/{usuarioId}")
     public List<Registro> getRegistrosByUsuario(@PathVariable Long usuarioId) {
         return registroRepo.findByUsuarioIdOrderByFechaHoraDesc(usuarioId);
     }
+
 }

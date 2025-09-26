@@ -54,3 +54,7 @@ export const obtenerRegistrosPorUsuario = async (usuarioId) => {
   const response = await api.get(`/registros/usuario/${usuarioId}`);
   return response.data;
 };
+export const obtenerRegistrosPorFecha = async (fecha) => {  
+  const response = await api.get(`/registros/fecha/${fecha}`);
+  return response.data;
+};

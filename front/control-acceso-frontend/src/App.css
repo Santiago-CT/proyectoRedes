@@ -288,3 +288,20 @@ body {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+.filters-container {
+  display: flex;
+  gap: 1rem;
+  background-color: var(--card-light);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.dark .filters-container {
+  background-color: var(--card-dark);
+}
+
+.filters-container .form-select {
+  max-width: 200px;
+}
