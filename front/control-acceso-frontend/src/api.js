@@ -49,3 +49,8 @@ export const crearRegistro = async (registro) => {
   const response = await api.post("/registros", registro);
   return response.data;
 };
+
+export const obtenerRegistrosPorUsuario = async (usuarioId) => {
+  const response = await api.get(`/registros/usuario/${usuarioId}`);
+  return response.data;
+};

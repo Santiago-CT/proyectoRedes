@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -108,5 +109,9 @@ public class RegistroController {
         nuevoRegistro.setFechaHora(LocalDateTime.now());
 
         return registroRepo.save(nuevoRegistro);
+    }
+    @GetMapping("/usuario/{usuarioId}")
+    public List<Registro> getRegistrosByUsuario(@PathVariable Long usuarioId) {
+        return registroRepo.findByUsuarioIdOrderByFechaHoraDesc(usuarioId);
     }
 }
