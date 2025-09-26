@@ -9,6 +9,7 @@ const Usuarios = ({ darkMode }) => {
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({ nombre: '', documento: '', rfidTag: '', estado: 'Activo' });
 
+  // Función dedicada para cargar los usuarios
   const fetchUsuarios = async () => {
     setIsLoading(true);
     try {
@@ -16,17 +17,20 @@ const Usuarios = ({ darkMode }) => {
       setUsuarios(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error al obtener usuarios:", error);
+      setUsuarios([]); // Asegura que el estado sea un array en caso de error
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Carga los usuarios al iniciar el componente
   useEffect(() => {
     fetchUsuarios();
   }, []);
 
   const openModal = (user = null) => {
     setEditingUser(user);
+    // Asegura que el estado del formulario se llene correctamente al editar o crear
     setFormData(user ? { ...user } : { nombre: '', documento: '', rfidTag: '', estado: 'Activo' });
     setShowModal(true);
   };
@@ -45,7 +49,7 @@ const Usuarios = ({ darkMode }) => {
       } else {
         await crearUsuario(formData);
       }
-      fetchUsuarios(); // Recargar la lista de usuarios
+      fetchUsuarios(); // Recargar la lista de usuarios después de guardar
       closeModal();
     } catch (error) {
       console.error("Error al guardar el usuario:", error);
@@ -57,7 +61,7 @@ const Usuarios = ({ darkMode }) => {
     if (window.confirm(`¿Estás seguro de cambiar el estado de ${user.nombre} a ${newStatus}?`)) {
       try {
         await actualizarUsuario(user.id, { ...user, estado: newStatus });
-        fetchUsuarios();
+        fetchUsuarios(); // Recargar la lista
       } catch (error) {
         console.error("Error al cambiar el estado del usuario:", error);
       }
@@ -68,7 +72,7 @@ const Usuarios = ({ darkMode }) => {
     if (window.confirm('¿Estás seguro de eliminar este usuario? ESTA ACCIÓN BORRARÁ TODOS SUS REGISTROS DE FORMA PERMANENTE.')) {
       try {
         await eliminarUsuario(id);
-        fetchUsuarios();
+        fetchUsuarios(); // Recargar la lista
       } catch (error) {
         console.error("Error al eliminar el usuario:", error);
       }
@@ -153,7 +157,7 @@ const Usuarios = ({ darkMode }) => {
                 </div>
                 <div className="form-group">
                   <label htmlFor="rfidTag"><Tag size={14} style={{display: 'inline-block', marginRight: '0.25rem'}} />Tag RFID</label>
-                  <input id="rfidTag" type="text" value={formData.rfidTag} onChange={(e) => setFormData({...formData, rfidTag: e.target.value})} className="form-input" placeholder="Ej: A1B2C3D4"/>
+                  <input id="rfidTag" type="text" value={formData.rfidTag || ''} onChange={(e) => setFormData({...formData, rfidTag: e.target.value})} className="form-input" placeholder="Ej: A1B2C3D4"/>
                 </div>
                 <div className="form-group">
                   <label htmlFor="estado">Estado</label>

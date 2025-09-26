@@ -9,6 +9,7 @@ const Lectores = ({ darkMode }) => {
   const [editingLector, setEditingLector] = useState(null);
   const [formData, setFormData] = useState({ ubicacion: '', estado: 'Activo' });
 
+  // Función dedicada para cargar los lectores
   const fetchLectores = async () => {
     setIsLoading(true);
     try {
@@ -22,6 +23,7 @@ const Lectores = ({ darkMode }) => {
     }
   };
 
+  // Carga los lectores al iniciar el componente
   useEffect(() => {
     fetchLectores();
   }, []);
@@ -42,12 +44,11 @@ const Lectores = ({ darkMode }) => {
     e.preventDefault();
     try {
       if (editingLector) {
-        const updatedLector = await actualizarLector(editingLector.id, formData);
-        setLectores(lectores.map(l => (l.id === editingLector.id ? updatedLector : l)));
+        await actualizarLector(editingLector.id, formData);
       } else {
-        const newLector = await crearLector(formData);
-        setLectores([...lectores, newLector]);
+        await crearLector(formData);
       }
+      fetchLectores(); // Recargar la lista de lectores
       closeModal();
     } catch (error) {
       console.error("Error al guardar el lector:", error);
@@ -58,7 +59,7 @@ const Lectores = ({ darkMode }) => {
     if (window.confirm('¿Estás seguro de eliminar este lector?')) {
       try {
         await eliminarLector(id);
-        setLectores(lectores.filter(l => l.id !== id));
+        fetchLectores(); // Recargar la lista
       } catch (error) {
         console.error("Error al eliminar el lector:", error);
       }
@@ -99,9 +100,7 @@ const Lectores = ({ darkMode }) => {
       </div>
 
       <div className="toolbar">
-        <div className="toolbar-left">
-          {/* Aquí puedes agregar filtros en el futuro si lo necesitas */}
-        </div>
+        <div className="toolbar-left"></div>
         <div className="toolbar-right">
           <button onClick={() => openModal()} className="btn btn-success">
             <Plus size={16} />
@@ -112,10 +111,7 @@ const Lectores = ({ darkMode }) => {
 
       <div className="table-container">
         {isLoading ? (
-          <div className="loading-indicator">
-            <Loader2 className="spinner" />
-            <span>Cargando lectores...</span>
-          </div>
+          <div className="loading-indicator"><Loader2 className="spinner" /><span>Cargando lectores...</span></div>
         ) : (
           <table className="data-table">
             <thead>
@@ -149,15 +145,9 @@ const Lectores = ({ darkMode }) => {
             </tbody>
           </table>
         )}
-        {!isLoading && lectores.length === 0 && (
-            <div className="empty-state">
-              <Wifi size={48} />
-              <p>No se encontraron lectores</p>
-            </div>
-        )}
+        {!isLoading && lectores.length === 0 && (<div className="empty-state"><Wifi size={48} /><p>No se encontraron lectores</p></div>)}
       </div>
 
-      {/* --- Ventana Emergente (Modal) --- */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -171,17 +161,11 @@ const Lectores = ({ darkMode }) => {
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
                 <div className="form-group">
-                  <label htmlFor="ubicacion">
-                    <MapPin size={14} style={{display: 'inline-block', marginRight: '0.25rem'}} />
-                    Ubicación
-                  </label>
+                  <label htmlFor="ubicacion"><MapPin size={14} style={{display: 'inline-block', marginRight: '0.25rem'}} />Ubicación</label>
                   <input id="ubicacion" type="text" value={formData.ubicacion} onChange={(e) => setFormData({...formData, ubicacion: e.target.value})} className="form-input" required placeholder="Ej: Entrada Principal"/>
                 </div>
                  <div className="form-group">
-                  <label htmlFor="estado">
-                    <Activity size={14} style={{display: 'inline-block', marginRight: '0.25rem'}} />
-                    Estado
-                  </label>
+                  <label htmlFor="estado"><Activity size={14} style={{display: 'inline-block', marginRight: '0.25rem'}} />Estado</label>
                   <select id="estado" value={formData.estado} onChange={(e) => setFormData({...formData, estado: e.target.value})} className="form-select">
                     <option value="Activo">Activo</option>
                     <option value="Inactivo">Inactivo</option>
@@ -189,9 +173,7 @@ const Lectores = ({ darkMode }) => {
                 </div>
                 <div className="info-box">
                     <Wifi size={20} />
-                    <p style={{margin: 0}}>
-                        Cada lector debe tener una ubicación única para identificarlo correctamente.
-                    </p>
+                    <p style={{margin: 0}}>Cada lector debe tener una ubicación única para identificarlo correctamente.</p>
                 </div>
               </div>
               <div className="modal-footer">
