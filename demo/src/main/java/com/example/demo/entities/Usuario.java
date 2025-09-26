@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+
 @Entity
 public class Usuario {
 
@@ -19,61 +20,31 @@ public class Usuario {
     private Long id;
 
     private String nombre;
-
     private String documento;
-    private String estado;
 
     @Column(unique = true)
     private String rfidTag;
 
-     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    
+    private String estado;
+
+    
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Registro> registros;
 
-    // Getters y setters
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+    public String getDocumento() { return documento; }
+    public void setDocumento(String documento) { this.documento = documento; }
+    public String getRfidTag() { return rfidTag; }
+    public void setRfidTag(String rfidTag) { this.rfidTag = rfidTag; }
+    public List<Registro> getRegistros() { return registros; }
+    public void setRegistros(List<Registro> registros) { this.registros = registros; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getDocumento() {
-        return documento;
-    }
-
-    public void setDocumento(String documento) {
-        this.documento = documento;
-    }
-
-    public String getRfidTag() {
-        return rfidTag;
-    }
-
-    public void setRfidTag(String rfidTag) {
-        this.rfidTag = rfidTag;
-    }
-
-    public List<Registro> getRegistros() {
-        return registros;
-    }
-
-    public void setRegistros(List<Registro> registros) {
-        this.registros = registros;
-    }
-    public String getEstado() {
-        return estado;
-    }
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
+    // --- NUEVOS GETTERS Y SETTERS ---
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 }

@@ -22,7 +22,6 @@ import com.example.demo.repositories.LectorRepository;
 import com.example.demo.repositories.RegistroRepository;
 import com.example.demo.repositories.UsuarioRepository;
 
-
 // DTO para la simulación manual desde el frontend
 class RegistroRequest {
     public Long usuarioId;
@@ -55,31 +54,32 @@ public class RegistroController {
         return registroRepo.findAll();
     }
 
-    // Endpoint para la simulación desde el frontend (CON LA NUEVA LÓGICA)
+    // Endpoint para la simulación desde el frontend
     @PostMapping
     public Registro createRegistro(@RequestBody RegistroRequest registroRequest) {
         Usuario usuario = usuarioRepo.findById(registroRequest.usuarioId)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + registroRequest.usuarioId));
         
+        // --- VALIDACIÓN DE ESTADO DE USUARIO ---
+        if (!"Activo".equalsIgnoreCase(usuario.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El usuario está inactivo y no puede realizar registros.");
+        }
+
         Lector lector = lectorRepo.findById(registroRequest.lectorId)
             .orElseThrow(() -> new RuntimeException("Lector no encontrado con id: " + registroRequest.lectorId));
 
-        // --- INICIO DE LA NUEVA VALIDACIÓN ---
         Optional<Registro> ultimoRegistro = registroRepo.findTopByUsuarioOrderByIdDesc(usuario);
         String movimientoDeseado = registroRequest.tipoMovimiento;
 
         if (movimientoDeseado.equalsIgnoreCase("salida")) {
-            // Regla: No se puede registrar una salida si no hay registro previo o si el último fue una salida.
             if (!ultimoRegistro.isPresent() || ultimoRegistro.get().getTipoMovimiento().equalsIgnoreCase("salida")) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede registrar salida: el usuario no tiene una entrada registrada.");
             }
         } else if (movimientoDeseado.equalsIgnoreCase("entrada")) {
-            // Regla: No se puede registrar una entrada si el último registro fue una entrada.
             if (ultimoRegistro.isPresent() && ultimoRegistro.get().getTipoMovimiento().equalsIgnoreCase("entrada")) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede registrar entrada: el usuario ya se encuentra adentro.");
             }
         }
-        // --- FIN DE LA NUEVA VALIDACIÓN ---
 
         Registro registro = new Registro();
         registro.setUsuario(usuario);
@@ -90,17 +90,20 @@ public class RegistroController {
         return registroRepo.save(registro);
     }
 
-    // NUEVO ENDPOINT PARA EL LECTOR RFID (ESP32)
+    // Endpoint para el lector RFID (ESP32)
     @PostMapping("/rfid")
     public Registro createRegistroByRfid(@RequestBody RfidRequest rfidRequest) {
         Usuario usuario = usuarioRepo.findByRfidTag(rfidRequest.rfidTag)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado con RFID Tag: " + rfidRequest.rfidTag));
         
-        Lector lector = lectorRepo.findById(rfidRequest.lectorId)
-            .orElseThrow(() -> new RuntimeException("Lector no encontrado con id: " + rfidRequest.lectorId));
+        // --- VALIDACIÓN DE ESTADO DE USUARIO ---
         if (!"Activo".equalsIgnoreCase(usuario.getEstado())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El usuario está inactivo y no puede realizar registros.");
         }
+        
+        Lector lector = lectorRepo.findById(rfidRequest.lectorId)
+            .orElseThrow(() -> new RuntimeException("Lector no encontrado con id: " + rfidRequest.lectorId));
+
         Optional<Registro> ultimoRegistro = registroRepo.findTopByUsuarioOrderByIdDesc(usuario);
         String tipoMovimiento = "entrada";
         if (ultimoRegistro.isPresent() && "entrada".equalsIgnoreCase(ultimoRegistro.get().getTipoMovimiento())) {
@@ -115,14 +118,16 @@ public class RegistroController {
 
         return registroRepo.save(nuevoRegistro);
     }
+
+    // Endpoint para buscar registros por fecha
     @GetMapping("/fecha/{fecha}")
     public List<Registro> getRegistrosByFecha(@PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
         return registroRepo.findByFecha(fecha);
     }
 
+    // Endpoint para buscar registros por usuario
     @GetMapping("/usuario/{usuarioId}")
     public List<Registro> getRegistrosByUsuario(@PathVariable Long usuarioId) {
         return registroRepo.findByUsuarioIdOrderByFechaHoraDesc(usuarioId);
     }
-
 }
