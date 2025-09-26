@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+// Define la clase JwtResponse para la respuesta del token
 class JwtResponse {
     private final String token;
     public JwtResponse(String token) { this.token = token; }
@@ -37,14 +38,11 @@ public class AuthController {
         String password = credentials.get("password");
 
         try {
-            // Dejamos que Spring Security autentique
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
         } catch (BadCredentialsException e) {
-            // Si las credenciales son incorrectas, devolvemos un 401
             return ResponseEntity.status(401).body("Credenciales inválidas");
         }
 
-        // Si la autenticación es exitosa, generamos el token
         final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         final String token = jwtUtil.generateToken(userDetails);
 

@@ -26,24 +26,21 @@ public class SecurityConfig {
         this.jwtRequestFilter = jwtRequestFilter;
     }
 
-    // Bean para codificar contraseñas
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Bean para definir nuestro usuario "admin" en memoria
     @Bean
     public UserDetailsService userDetailsService() {
         UserDetails user = User.builder()
                 .username("admin")
-                .password(passwordEncoder().encode("admin123")) // La contraseña se guarda codificada
+                .password(passwordEncoder().encode("admin123"))
                 .roles("ADMIN")
                 .build();
         return new InMemoryUserDetailsManager(user);
     }
 
-    // Bean para exponer el AuthenticationManager
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
