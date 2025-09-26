@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-// Define la clase JwtResponse para la respuesta del token
 class JwtResponse {
     private final String token;
     public JwtResponse(String token) { this.token = token; }
