@@ -22,14 +22,12 @@ import com.example.demo.repositories.LectorRepository;
 import com.example.demo.repositories.RegistroRepository;
 import com.example.demo.repositories.UsuarioRepository;
 
-// DTO para la simulación manual desde el frontend
 class RegistroRequest {
     public Long usuarioId;
     public Long lectorId;
     public String tipoMovimiento;
 }
 
-// DTO para la petición que enviará el ESP32
 class RfidRequest {
     public String rfidTag;
     public Long lectorId;
@@ -54,13 +52,13 @@ public class RegistroController {
         return registroRepo.findAll();
     }
 
-    // Endpoint para la simulación desde el frontend
     @PostMapping
     public Registro createRegistro(@RequestBody RegistroRequest registroRequest) {
         Usuario usuario = usuarioRepo.findById(registroRequest.usuarioId)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + registroRequest.usuarioId));
         
         // --- VALIDACIÓN DE ESTADO DE USUARIO ---
+        // Aquí se revisa si el usuario está activo. Si no, lanza un error.
         if (!"Activo".equalsIgnoreCase(usuario.getEstado())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El usuario está inactivo y no puede realizar registros.");
         }
@@ -90,13 +88,12 @@ public class RegistroController {
         return registroRepo.save(registro);
     }
 
-    // Endpoint para el lector RFID (ESP32)
     @PostMapping("/rfid")
     public Registro createRegistroByRfid(@RequestBody RfidRequest rfidRequest) {
         Usuario usuario = usuarioRepo.findByRfidTag(rfidRequest.rfidTag)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado con RFID Tag: " + rfidRequest.rfidTag));
         
-        // --- VALIDACIÓN DE ESTADO DE USUARIO ---
+        // --- VALIDACIÓN DE ESTADO DE USUARIO (también para el RFID) ---
         if (!"Activo".equalsIgnoreCase(usuario.getEstado())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El usuario está inactivo y no puede realizar registros.");
         }
@@ -119,13 +116,11 @@ public class RegistroController {
         return registroRepo.save(nuevoRegistro);
     }
 
-    // Endpoint para buscar registros por fecha
     @GetMapping("/fecha/{fecha}")
     public List<Registro> getRegistrosByFecha(@PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
         return registroRepo.findByFecha(fecha);
     }
 
-    // Endpoint para buscar registros por usuario
     @GetMapping("/usuario/{usuarioId}")
     public List<Registro> getRegistrosByUsuario(@PathVariable Long usuarioId) {
         return registroRepo.findByUsuarioIdOrderByFechaHoraDesc(usuarioId);

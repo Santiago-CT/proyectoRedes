@@ -131,13 +131,12 @@ const Registros = ({ darkMode }) => {
             <Users size={16} /><span>Por Usuario</span>
           </button>
         </div>
-        {/* CORREGIDO: Llama a handleOpenModal */}
         <button onClick={handleOpenModal} className="btn btn-primary">
           <Plus size={16} /><span>Simular Registro</span>
         </button>
       </div>
       
-      {viewMode === 'recent' && (
+      {viewMode === 'recent' && !selectedUser && (
         <div className="filters-container">
             <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
                 <label htmlFor="date-filter"><Calendar size={16} /> Filtrar por día:</label>
