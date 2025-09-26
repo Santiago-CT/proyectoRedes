@@ -132,7 +132,7 @@ body {
   border-radius: 0.5rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .btn-primary { background-color: var(--blue-500); color: white; }
@@ -293,19 +293,111 @@ body {
   to { transform: rotate(360deg); }
 }
 
-.filters-container {
+/* --- Componente Registros: Toggle y Filtros --- */
+
+/* Contenedor para los botones 'Recientes' y 'Por Usuario' */
+.toolbar .toggle-group {
   display: flex;
+  gap: 0.5rem;
+  background-color: #f3f4f6; /* Fondo gris claro */
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+}
+.dark .toolbar .toggle-group {
+  background-color: #374151; /* Fondo gris oscuro en modo oscuro */
+}
+
+/* Estilo individual para los botones de palanca (toggle) */
+.btn-toggle {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  background-color: transparent;
+  color: var(--text-secondary-light);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease-in-out;
+}
+.dark .btn-toggle {
+  color: var(--text-secondary-dark);
+}
+
+/* Estilo al pasar el mouse por encima (hover) */
+.btn-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--text-primary-light);
+}
+.dark .btn-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary-dark);
+}
+
+/* Estilo para el botón ACTIVO, similar al de la sidebar */
+.btn-toggle.active {
+  background-color: var(--blue-500);
+  color: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Contenedor para la sección de filtros de fecha */
+.filters-container {
+  background-color: var(--card-light);
+  padding: 1rem 1.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--border-light);
+}
+.dark .filters-container {
+  background-color: var(--card-dark);
+  border-color: var(--border-dark);
+}
+
+.filters-container .form-select,
+.filters-container .form-input {
+  max-width: 200px;
+}
+
+/* Estilos para la lista de usuarios en la vista 'Por Usuario' */
+.user-list-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.user-list-item {
+  display: flex;
+  align-items: center;
   gap: 1rem;
   background-color: var(--card-light);
   padding: 1rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--border-light);
 }
 
-.dark .filters-container {
+.dark .user-list-item {
   background-color: var(--card-dark);
+  border-color: var(--border-dark);
 }
 
-.filters-container .form-select {
-  max-width: 200px;
+.user-list-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+.dark .user-list-item:hover {
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.user-list-item .text-secondary {
+  color: var(--text-secondary-light);
+}
+
+.dark .user-list-item .text-secondary {
+  color: var(--text-secondary-dark);
 }

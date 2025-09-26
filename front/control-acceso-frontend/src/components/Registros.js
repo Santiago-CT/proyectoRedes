@@ -71,7 +71,7 @@ const Registros = ({ initialUsuarios, initialLectores, initialRegistros, reloadD
     <div className="space-y-6">
       <div className="page-header"><h2>Historial de Registros</h2><p>Consulta el historial de entradas y salidas del sistema.</p></div>
       <div className="toolbar">
-        <div style={{ display: 'flex', gap: '0.5rem', backgroundColor: darkMode ? '#374151' : '#f3f4f6', padding: '0.25rem', borderRadius: '0.5rem' }}>
+        <div className="toggle-group">
           <button onClick={() => { setViewMode('recent'); setSelectedUser(null); }} className={`btn-toggle ${viewMode === 'recent' ? 'active' : ''}`}><List size={16} /><span>Recientes</span></button>
           <button onClick={() => { setViewMode('byUser'); setSelectedUser(null); }} className={`btn-toggle ${viewMode === 'byUser' ? 'active' : ''}`}><Users size={16} /><span>Por Usuario</span></button>
         </div>
