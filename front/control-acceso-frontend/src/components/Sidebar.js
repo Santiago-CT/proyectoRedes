@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom'; // Importa NavLink
+import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, Wifi, FileText, Moon, Sun } from 'lucide-react';
 
 const Sidebar = ({ darkMode, setDarkMode }) => {
@@ -13,15 +13,16 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <h1 className="sidebar-title">Control de Acceso</h1>
+        <h1>Control de Acceso</h1>
       </div>
-      <nav className="sidebar-nav">
+      <nav>
         {sections.map((section) => (
           // Usamos NavLink, que maneja la clase 'active' automáticamente
           <NavLink
             key={section.name}
             to={section.path}
-            className="sidebar-link"
+            // Aquí aplicamos la clase correcta y la lógica para el estado activo
+            className={({ isActive }) => `sidebar-button ${isActive ? 'active' : ''}`}
             end // 'end' es crucial para que la ruta "/" no esté siempre activa
           >
             {section.icon}
@@ -29,8 +30,8 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
           </NavLink>
         ))}
       </nav>
-      <div className="sidebar-footer">
-        <button onClick={() => setDarkMode(!darkMode)} className="theme-toggle">
+      <div style={{ padding: '1rem' }}>
+        <button onClick={() => setDarkMode(!darkMode)} className="sidebar-button">
           {darkMode ? <Sun /> : <Moon />}
           <span>{darkMode ? 'Modo Claro' : 'Modo Oscuro'}</span>
         </button>
