@@ -4,12 +4,12 @@ import { crearUsuario, actualizarUsuario, eliminarUsuario } from '../api';
 
 const Usuarios = ({ initialData, reloadData, darkMode }) => {
   const [usuarios, setUsuarios] = useState(initialData);
-  const [isLoading, setIsLoading] = useState(false); // La carga principal la maneja App.js
+  const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({ nombre: '', documento: '', rfidTag: '', estado: 'Activo' });
 
-  // Sincroniza el estado local si los datos de App.js cambian
+  // Sincroniza el estado del componente si los datos de App.js cambian
   useEffect(() => {
     setUsuarios(initialData);
   }, [initialData]);
@@ -25,16 +25,14 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
     setEditingUser(null);
     setFormData({ nombre: '', documento: '', rfidTag: '', estado: 'Activo' });
   };
-  
-  // Función centralizada para manejar acciones y recargar datos
+
   const handleAction = async (action) => {
     setIsLoading(true);
     try {
       await action();
       await reloadData(); // Llama a la función de App.js para recargar todo
     } catch (error) {
-      console.error("Ocurrió un error al procesar la acción:", error);
-      alert("No se pudo completar la acción. Revisa la consola para más detalles.");
+      console.error("Ocurrió un error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -42,29 +40,26 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const action = async () => {
+    handleAction(async () => {
       if (editingUser) {
         await actualizarUsuario(editingUser.id, formData);
       } else {
         await crearUsuario(formData);
       }
       closeModal();
-    };
-    handleAction(action);
+    });
   };
 
   const toggleUserStatus = async (user) => {
     const newStatus = user.estado === 'Activo' ? 'Inactivo' : 'Activo';
     if (window.confirm(`¿Estás seguro de cambiar el estado de ${user.nombre} a ${newStatus}?`)) {
-      const action = async () => await actualizarUsuario(user.id, { ...user, estado: newStatus });
-      handleAction(action);
+      handleAction(async () => await actualizarUsuario(user.id, { ...user, estado: newStatus }));
     }
   };
-  
+
   const deleteUser = async (id) => {
     if (window.confirm('¿Estás seguro de eliminar este usuario? ESTA ACCIÓN BORRARÁ TODOS SUS REGISTROS DE FORMA PERMANENTE.')) {
-      const action = async () => await eliminarUsuario(id);
-      handleAction(action);
+      handleAction(async () => await eliminarUsuario(id));
     }
   };
 
@@ -123,10 +118,7 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="modal-header">
-              <h3>{editingUser ? 'Editar Usuario' : 'Agregar Usuario'}</h3>
-              <button onClick={closeModal} className="btn-icon"><X size={24} /></button>
-            </div>
+            <div className="modal-header"><h3>{editingUser ? 'Editar Usuario' : 'Agregar Usuario'}</h3><button onClick={closeModal} className="btn-icon"><X size={24} /></button></div>
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
                 <div className="form-group"><label htmlFor="nombre">Nombre</label><input id="nombre" type="text" value={formData.nombre} onChange={(e) => setFormData({...formData, nombre: e.target.value})} className="form-input" required/></div>
