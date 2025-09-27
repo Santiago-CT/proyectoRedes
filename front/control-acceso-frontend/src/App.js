@@ -48,6 +48,17 @@ function App() {
     }
   }, []); // El array vacío asegura que la función no se recree innecesariamente.
 
+  // --- NUEVO: Hook para verificar la autenticación al cargar la app ---
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+      setIsLoading(false);
+    }
+  }, []); // Se ejecuta solo una vez al montar el componente.
+
   useEffect(() => {
     // Cuando el estado de autenticación cambia a `true`, se cargan los datos.
     if (isAuthenticated) {
