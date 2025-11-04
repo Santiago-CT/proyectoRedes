@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, X, Users, Loader2, Tag, Power, PowerOff } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Users, Loader2, Tag, Power, PowerOff, Search } from 'lucide-react';
 import { crearUsuario, actualizarUsuario, eliminarUsuario } from '../api';
 
 const Usuarios = ({ initialData, reloadData, darkMode }) => {
@@ -8,6 +8,7 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({ nombre: '', documento: '', rfidTag: '', estado: 'Activo' });
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Sincroniza el estado del componente si los datos de App.js cambian
   useEffect(() => {
@@ -63,6 +64,15 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
     }
   };
 
+  const filteredUsuarios = usuarios.filter(usuario => {
+    const term = searchTerm.toLowerCase();
+    return (
+      usuario.nombre.toLowerCase().includes(term) ||
+      usuario.documento.toLowerCase().includes(term) ||
+      (usuario.rfidTag && usuario.rfidTag.toLowerCase().includes(term))
+    );
+  });
+
   return (
     <div className="space-y-6">
       <div className="page-header">
@@ -70,12 +80,28 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
         <p>Administra los usuarios del sistema, su estado y sus datos.</p>
       </div>
       <div className="toolbar">
-        <h3 className="font-semibold" style={{fontSize: '1.25rem'}}>Lista de Usuarios ({usuarios.length})</h3>
+        <div className="search-container">
+          <Search size={18} className="search-icon" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre, documento o RFID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+        </div>
         <button onClick={() => openModal()} className="btn btn-primary">
           <Plus size={16} />
           <span>Agregar Usuario</span>
         </button>
       </div>
+
+      <div className="flex justify-between items-center">
+        <h3 className="text-xl font-semibold">
+          {searchTerm ? `Resultados: ${filteredUsuarios.length}` : `Total de Usuarios: ${usuarios.length}`}
+        </h3>
+      </div>
+
       <div className="table-container">
         {isLoading ? (
           <div className="loading-indicator"><Loader2 className="spinner" /></div>
@@ -91,7 +117,7 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
               </tr>
             </thead>
             <tbody>
-              {usuarios.map((usuario) => (
+              {filteredUsuarios.map((usuario) => (
                 <tr key={usuario.id}>
                   <td>{usuario.nombre}</td>
                   <td>{usuario.documento}</td>
@@ -113,7 +139,12 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
             </tbody>
           </table>
         )}
-        {!isLoading && usuarios.length === 0 && (<div className="empty-state"><Users size={48} /><p>No se encontraron usuarios</p></div>)}
+        {!isLoading && filteredUsuarios.length === 0 && (
+          <div className="empty-state">
+            <Users size={48} />
+            <p>{searchTerm ? 'No se encontraron usuarios con ese criterio' : 'No hay usuarios registrados'}</p>
+          </div>
+        )}
       </div>
       {showModal && (
         <div className="modal-overlay">
