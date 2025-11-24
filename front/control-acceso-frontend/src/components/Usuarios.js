@@ -4,7 +4,7 @@ import {
   crearUsuario, 
   actualizarUsuario, 
   eliminarUsuario,
-  obtenerUltimoTagDesconocido // <--- Nueva función importada
+  obtenerUltimoTagDesconocido 
 } from '../api';
 
 const Usuarios = ({ initialData, reloadData, darkMode }) => {
@@ -15,7 +15,6 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
   const [formData, setFormData] = useState({ nombre: '', documento: '', rfidTag: '', estado: 'Activo' });
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Sincroniza el estado del componente si los datos de App.js cambian
   useEffect(() => {
     setUsuarios(initialData);
   }, [initialData]);
@@ -36,7 +35,7 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
     setIsLoading(true);
     try {
       await action();
-      await reloadData(); // Llama a la función de App.js para recargar todo
+      await reloadData();
     } catch (error) {
       console.error("Ocurrió un error:", error);
     } finally {
@@ -56,17 +55,14 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
     });
   };
 
-  // --- NUEVA FUNCIÓN: Capturar Tag del Backend ---
   const handleCapturarTag = async () => {
     try {
       const data = await obtenerUltimoTagDesconocido();
       if (data && data.rfidTag) {
         setFormData(prev => ({ ...prev, rfidTag: data.rfidTag }));
-        alert("¡Tag capturado exitosamente!");
       }
     } catch (error) {
-      // Si el backend devuelve 404, es que no hay tags recientes
-      alert("No se detectó ningún tag reciente. Pasa una tarjeta por el lector primero.");
+      alert("No se ha detectado ningún tag reciente en el lector. Pasa la tarjeta primero.");
     }
   };
 
@@ -174,23 +170,34 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
                 <div className="form-group"><label htmlFor="nombre">Nombre</label><input id="nombre" type="text" value={formData.nombre} onChange={(e) => setFormData({...formData, nombre: e.target.value})} className="form-input" required/></div>
                 <div className="form-group"><label htmlFor="documento">Documento</label><input id="documento" type="text" value={formData.documento} onChange={(e) => setFormData({...formData, documento: e.target.value})} className="form-input" required/></div>
                 
-                {/* --- CAMPO DE RFID CON BOTÓN DE CAPTURA --- */}
                 <div className="form-group">
-                    <label htmlFor="rfidTag"><Tag size={14} style={{display: 'inline-block', marginRight: '0.25rem'}} />Tag RFID</label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <input 
-                            id="rfidTag" 
-                            type="text" 
-                            value={formData.rfidTag || ''} 
-                            onChange={(e) => setFormData({...formData, rfidTag: e.target.value})} 
-                            className="form-input" 
-                            placeholder="Ej: A1B2C3D4"
-                        />
-                        <button type="button" onClick={handleCapturarTag} className="btn btn-secondary" title="Capturar del lector">
-                            <Tag size={16} />
-                            <span>Capturar</span>
-                        </button>
-                    </div>
+                  <label htmlFor="rfidTag" style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                    <Tag size={14} />Tag RFID
+                  </label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                      id="rfidTag" 
+                      type="text" 
+                      value={formData.rfidTag || ''} 
+                      onChange={(e) => setFormData({...formData, rfidTag: e.target.value})} 
+                      className="form-input" 
+                      style={{ flex: 1 }}
+                      placeholder="Ej: A1B2C3D4"
+                    />
+                    <button 
+                      type="button" 
+                      onClick={handleCapturarTag} 
+                      className="btn btn-secondary" 
+                      title="Capturar del lector"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap' }}
+                    >
+                      <Tag size={16} />
+                      <span>Capturar</span>
+                    </button>
+                  </div>
+                  <small style={{ color: '#6b7280', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                    Pasa una tarjeta nueva por el lector y presiona "Capturar".
+                  </small>
                 </div>
 
                 <div className="form-group"><label htmlFor="estado">Estado</label><select id="estado" value={formData.estado} onChange={(e) => setFormData({...formData, estado: e.target.value})} className="form-select"><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></select></div>
