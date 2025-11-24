@@ -1,14 +1,16 @@
-#include <Arduino.h>
-#include <WiFi.h>
-#include <HTTPClient.h>
 #include <SPI.h>
 #include <MFRC522.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
 #include <ArduinoJson.h>
 
+// --- CONFIGURACIÓN DE RED Y SERVIDOR ---
+// ⚠️ REEMPLAZA CON TUS DATOS REALES
 const char* WIFI_SSID = "Nemo";
 const char* WIFI_PASSWORD = "12345678"; 
 
-
+// IP de tu PC donde corre el servidor (Backend Java)
+// Según tu comando 'ip addr show', tu IP es 192.168.43.210
 const char* SERVER_IP = "192.168.43.210"; 
 const int SERVER_PORT = 8080;
 const long LECTOR_ID = 1; // ID de este lector en la base de datos
@@ -79,7 +81,9 @@ void enviarTagRfid(String rfidTag) {
     http.begin(serverUrl);
     http.addHeader("Content-Type", "application/json");
 
-    // Crear JSON
+    // Crear JSON (usando ArduinoJson v6 o v7)
+    // Si usas v6, usa StaticJsonDocument. Si usas v7, usa JsonDocument.
+    // Este código es compatible con v6 (muy común) y v7.
     StaticJsonDocument<200> doc;
     doc["rfidTag"] = rfidTag;
     doc["lectorId"] = LECTOR_ID;

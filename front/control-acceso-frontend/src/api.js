@@ -117,3 +117,7 @@ export const obtenerRegistrosPorLector = async (lectorId) => {
   const response = await api.get(`/registros/lector/${lectorId}`);
   return response.data;
 };
+export const obtenerUltimoTagDesconocido = async () => {
+  const response = await api.get("/registros/ultimo-desconocido");
+  return response.data;
+};

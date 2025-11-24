@@ -2,17 +2,15 @@ package com.example.demo.Controllers;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.entities.Lector;
@@ -41,6 +39,9 @@ public class RegistroController {
     private final UsuarioRepository usuarioRepo;
     private final LectorRepository lectorRepo;
 
+    // Variable temporal para guardar el último tag no registrado
+    private String ultimoTagDesconocido = null;
+
     public RegistroController(RegistroRepository registroRepo, UsuarioRepository usuarioRepo, LectorRepository lectorRepo) {
         this.registroRepo = registroRepo;
         this.usuarioRepo = usuarioRepo;
@@ -52,57 +53,61 @@ public class RegistroController {
         return registroRepo.findAll();
     }
 
+    // --- NUEVO ENDPOINT: Obtener el último tag desconocido ---
+    @GetMapping("/ultimo-desconocido")
+    public ResponseEntity<Map<String, String>> getUltimoTagDesconocido() {
+        if (ultimoTagDesconocido == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Collections.singletonMap("message", "No se han detectado tags recientes"));
+        }
+        return ResponseEntity.ok(Collections.singletonMap("rfidTag", ultimoTagDesconocido));
+    }
+
     @PostMapping
     public Registro createRegistro(@RequestBody RegistroRequest registroRequest) {
         Usuario usuario = usuarioRepo.findById(registroRequest.usuarioId)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + registroRequest.usuarioId));
         
-        // --- VALIDACIÓN DE ESTADO DE USUARIO ---
-        // Aquí se revisa si el usuario está activo. Si no, lanza un error.
         if (!"Activo".equalsIgnoreCase(usuario.getEstado())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El usuario está inactivo y no puede realizar registros.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El usuario está inactivo");
         }
 
         Lector lector = lectorRepo.findById(registroRequest.lectorId)
             .orElseThrow(() -> new RuntimeException("Lector no encontrado con id: " + registroRequest.lectorId));
 
-        Optional<Registro> ultimoRegistro = registroRepo.findTopByUsuarioOrderByIdDesc(usuario);
-        String movimientoDeseado = registroRequest.tipoMovimiento;
-
-        if (movimientoDeseado.equalsIgnoreCase("salida")) {
-            if (!ultimoRegistro.isPresent() || ultimoRegistro.get().getTipoMovimiento().equalsIgnoreCase("salida")) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede registrar salida: el usuario no tiene una entrada registrada.");
-            }
-        } else if (movimientoDeseado.equalsIgnoreCase("entrada")) {
-            if (ultimoRegistro.isPresent() && ultimoRegistro.get().getTipoMovimiento().equalsIgnoreCase("entrada")) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede registrar entrada: el usuario ya se encuentra adentro.");
-            }
-        }
-
-        Registro registro = new Registro();
-        registro.setUsuario(usuario);
-        registro.setLector(lector);
-        registro.setTipoMovimiento(movimientoDeseado);
-        registro.setFechaHora(LocalDateTime.now());
-
-        return registroRepo.save(registro);
+        return procesarMovimiento(usuario, lector);
     }
 
     @PostMapping("/rfid")
     public Registro createRegistroByRfid(@RequestBody RfidRequest rfidRequest) {
-        Usuario usuario = usuarioRepo.findByRfidTag(rfidRequest.rfidTag)
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con RFID Tag: " + rfidRequest.rfidTag));
+        // Buscamos el usuario por el tag
+        Optional<Usuario> usuarioOpt = usuarioRepo.findByRfidTag(rfidRequest.rfidTag);
+
+        // SI EL USUARIO NO EXISTE:
+        if (!usuarioOpt.isPresent()) {
+            // Guardamos este tag en la variable temporal para que el Frontend pueda capturarlo
+            this.ultimoTagDesconocido = rfidRequest.rfidTag;
+            System.out.println("Tag desconocido detectado y guardado temporalmente: " + rfidRequest.rfidTag);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tag no registrado. Guardado para captura.");
+        }
+
+        Usuario usuario = usuarioOpt.get();
         
-        // --- VALIDACIÓN DE ESTADO DE USUARIO (también para el RFID) ---
         if (!"Activo".equalsIgnoreCase(usuario.getEstado())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El usuario está inactivo y no puede realizar registros.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuario inactivo");
         }
         
         Lector lector = lectorRepo.findById(rfidRequest.lectorId)
-            .orElseThrow(() -> new RuntimeException("Lector no encontrado con id: " + rfidRequest.lectorId));
+            .orElseThrow(() -> new RuntimeException("Lector no encontrado"));
 
+        return procesarMovimiento(usuario, lector);
+    }
+
+    // Método auxiliar para evitar repetir lógica
+    private Registro procesarMovimiento(Usuario usuario, Lector lector) {
         Optional<Registro> ultimoRegistro = registroRepo.findTopByUsuarioOrderByIdDesc(usuario);
         String tipoMovimiento = "entrada";
+        
         if (ultimoRegistro.isPresent() && "entrada".equalsIgnoreCase(ultimoRegistro.get().getTipoMovimiento())) {
             tipoMovimiento = "salida";
         }
@@ -125,6 +130,7 @@ public class RegistroController {
     public List<Registro> getRegistrosByUsuario(@PathVariable Long usuarioId) {
         return registroRepo.findByUsuarioIdOrderByFechaHoraDesc(usuarioId);
     }
+    
     @GetMapping("/lector/{lectorId}")
     public List<Registro> getRegistrosByLector(@PathVariable Long lectorId) {
         return registroRepo.findByLectorIdOrderByFechaHoraDesc(lectorId);

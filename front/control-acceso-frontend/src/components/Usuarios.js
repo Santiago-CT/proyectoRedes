@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, X, Users, Loader2, Tag, Power, PowerOff, Search } from 'lucide-react';
-import { crearUsuario, actualizarUsuario, eliminarUsuario } from '../api';
+import { 
+  crearUsuario, 
+  actualizarUsuario, 
+  eliminarUsuario,
+  obtenerUltimoTagDesconocido // <--- Nueva función importada
+} from '../api';
 
 const Usuarios = ({ initialData, reloadData, darkMode }) => {
   const [usuarios, setUsuarios] = useState(initialData);
@@ -49,6 +54,20 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
       }
       closeModal();
     });
+  };
+
+  // --- NUEVA FUNCIÓN: Capturar Tag del Backend ---
+  const handleCapturarTag = async () => {
+    try {
+      const data = await obtenerUltimoTagDesconocido();
+      if (data && data.rfidTag) {
+        setFormData(prev => ({ ...prev, rfidTag: data.rfidTag }));
+        alert("¡Tag capturado exitosamente!");
+      }
+    } catch (error) {
+      // Si el backend devuelve 404, es que no hay tags recientes
+      alert("No se detectó ningún tag reciente. Pasa una tarjeta por el lector primero.");
+    }
   };
 
   const toggleUserStatus = async (user) => {
@@ -154,7 +173,26 @@ const Usuarios = ({ initialData, reloadData, darkMode }) => {
               <div className="modal-body">
                 <div className="form-group"><label htmlFor="nombre">Nombre</label><input id="nombre" type="text" value={formData.nombre} onChange={(e) => setFormData({...formData, nombre: e.target.value})} className="form-input" required/></div>
                 <div className="form-group"><label htmlFor="documento">Documento</label><input id="documento" type="text" value={formData.documento} onChange={(e) => setFormData({...formData, documento: e.target.value})} className="form-input" required/></div>
-                <div className="form-group"><label htmlFor="rfidTag"><Tag size={14} style={{display: 'inline-block', marginRight: '0.25rem'}} />Tag RFID</label><input id="rfidTag" type="text" value={formData.rfidTag || ''} onChange={(e) => setFormData({...formData, rfidTag: e.target.value})} className="form-input" placeholder="Ej: A1B2C3D4"/></div>
+                
+                {/* --- CAMPO DE RFID CON BOTÓN DE CAPTURA --- */}
+                <div className="form-group">
+                    <label htmlFor="rfidTag"><Tag size={14} style={{display: 'inline-block', marginRight: '0.25rem'}} />Tag RFID</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input 
+                            id="rfidTag" 
+                            type="text" 
+                            value={formData.rfidTag || ''} 
+                            onChange={(e) => setFormData({...formData, rfidTag: e.target.value})} 
+                            className="form-input" 
+                            placeholder="Ej: A1B2C3D4"
+                        />
+                        <button type="button" onClick={handleCapturarTag} className="btn btn-secondary" title="Capturar del lector">
+                            <Tag size={16} />
+                            <span>Capturar</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div className="form-group"><label htmlFor="estado">Estado</label><select id="estado" value={formData.estado} onChange={(e) => setFormData({...formData, estado: e.target.value})} className="form-select"><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></select></div>
               </div>
               <div className="modal-footer"><button type="button" onClick={closeModal} className="btn">Cancelar</button><button type="submit" className="btn btn-primary">{editingUser ? 'Actualizar' : 'Crear'}</button></div>
