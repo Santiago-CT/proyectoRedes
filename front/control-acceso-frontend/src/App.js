@@ -11,7 +11,8 @@ import { obtenerUsuarios, obtenerLectores, obtenerRegistros } from './api';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('authToken'));
 
   const [usuarios, setUsuarios] = useState([]);
   const [lectores, setLectores] = useState([]);
@@ -48,10 +49,20 @@ function App() {
     }
   }, []); // El array vacío asegura que la función no se recree innecesariamente.
 
-  useEffect(() => {
+ useEffect(() => {
     // Cuando el estado de autenticación cambia a `true`, se cargan los datos.
     if (isAuthenticated) {
-      fetchData();
+      fetchData(); // Carga inmediata al entrar
+
+      
+      const intervalo = setInterval(() => {
+        fetchData();
+      }, 2000);
+
+      // Limpieza: detiene el reloj cuando sales de la pantalla
+      return () => clearInterval(intervalo);
+      // --------------------------------------------------
+
     } else {
       setIsLoading(false);
     }
